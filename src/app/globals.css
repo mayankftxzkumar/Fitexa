@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-fitexa-green-900: #04140D;
+  --color-fitexa-green-800: #08281A;
+  --color-fitexa-green-700: #0F3D2E;
+  /* Updated to requested range */
+  --color-fitexa-green: #0D4F31;
+  --color-fitexa-black: #050505;
+  --color-fitexa-beige: #F5F2EB;
+  --color-fitexa-pink: #FCE7EC;
+  --color-fitexa-pink-darker: #E5BCC6;
+
+  --color-background: var(--color-fitexa-black);
+  --color-foreground: var(--color-fitexa-beige);
+
+  /* Set default font to Outfit */
+  --font-sans: var(--font-outfit), Arial, sans-serif;
+
+  /* Custom Animations */
+  --animate-bg-shift: bg-shift 20s ease-in-out infinite alternate;
+  --animate-fade-in-up: fade-in-up 1s ease-out forwards;
+}
+
+@keyframes bg-shift {
+  0% {
+    transform: scale(1.0) translate(0, 0);
+  }
+
+  50% {
+    transform: scale(1.05) translate(-1%, 2%);
+  }
+
+  100% {
+    transform: scale(1.0) translate(2%, -1%);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:root {
+  --background: #050505;
+  --foreground: #F5F2EB;
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased selection:bg-fitexa-pink selection:text-fitexa-black;
+  }
+}
+
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.glass-panel {
+  background: rgba(245, 242, 235, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 242, 235, 0.1);
+}

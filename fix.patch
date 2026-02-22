@@ -1,0 +1,29 @@
+--- src/components/dashboard/DashboardClient.tsx
++++ src/components/dashboard/DashboardClient.tsx
+@@ -2,6 +2,6 @@
+ 
+-import { useState, useEffect } from 'react';
++import { useState, useEffect, useRef } from 'react';
+ import { createClient } from '@/lib/supabaseClient';
+ import { useRouter } from 'next/navigation';
+@@ -60,6 +60,19 @@
+ 
+     const firstName = user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
++    const avatarUrl = user.user_metadata?.avatar_url || null;
++
++    const [isDarkMode, setIsDarkMode] = useState(true);
++    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
++    const [isProfileOpen, setIsProfileOpen] = useState(false);
++    const dropdownRef = useRef<HTMLDivElement>(null);
++
++    useEffect(() => {
++        function handleClickOutside(event: MouseEvent) {
++            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
++                setIsDropdownOpen(false);
++            }
++        }
++        document.addEventListener("mousedown", handleClickOutside);
++        return () => document.removeEventListener("mousedown", handleClickOutside);
++    }, [dropdownRef]);
+ 
+     useEffect(() => {
