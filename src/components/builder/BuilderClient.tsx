@@ -438,6 +438,27 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                     <p className={`text-sm ${muted}`}>Your AI agent will chat with customers through a Telegram bot. It only takes 2 minutes to set up!</p>
                                 </div>
 
+                                {/* Connected status */}
+                                {(botUsername || initialProject?.telegram_bot_username) && (
+                                    <div className={`rounded-xl p-5 border ${isDarkMode ? 'border-green-500/20 bg-green-500/5' : 'border-green-600/20 bg-green-600/5'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDarkMode ? 'bg-green-500/10' : 'bg-green-600/10'}`}>
+                                                🤖
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`font-bold text-sm ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
+                                                    ✅ Bot Connected
+                                                </p>
+                                                <p className={`text-xs mt-0.5 ${muted}`}>
+                                                    Your bot <a href={`https://t.me/${botUsername || initialProject?.telegram_bot_username}`} target="_blank" rel="noopener noreferrer" className={`font-bold underline ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>@{botUsername || initialProject?.telegram_bot_username}</a> is ready to receive messages.
+                                                </p>
+                                            </div>
+                                            <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${isDarkMode ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-green-600/10 text-green-700 border border-green-600/20'}`}>
+                                                Live
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className={`rounded-xl p-6 text-sm space-y-4 ${isDarkMode ? 'bg-[#86efac]/5 border border-[#86efac]/10' : 'bg-[#0D4F31]/5 border border-[#0D4F31]/10'}`}>
                                     <p className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>📱 Quick Setup Guide</p>
                                     <div className={`space-y-3.5 ${isDarkMode ? 'text-white/70' : 'text-black/70'}`}>
@@ -451,7 +472,7 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>3</span>
-                                            <p>Give your bot a <strong>display name</strong> (e.g. &quot;{initialProject?.business_name || 'My Business'} AI&quot;) and a <strong>username</strong> ending in <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>bot</code></p>
+                                            <p>Give your bot a <strong>display name</strong> (e.g. &quot;My Business AI&quot;) and a <strong>username</strong> ending in <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>bot</code> (e.g. <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>MyAI_bot</code>)</p>
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>4</span>

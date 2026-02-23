@@ -82,8 +82,6 @@ export const PREBUILT_FEATURES: AIFeature[] = [
         description: 'Automatically respond to Google reviews with smart replies.',
         icon: '⭐',
         enabled: false,
-        disabled: true,
-        comingSoon: true,
     },
     {
         id: 'seo_content',
