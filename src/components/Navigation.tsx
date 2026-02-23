@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import React from 'react';
 import { createClient } from '@/lib/supabaseClient';
 
@@ -21,8 +22,9 @@ export default function Navigation() {
             <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
                 <div className="flex justify-between items-center h-24">
                     <div className="flex-shrink-0">
-                        <Link href="/" className="text-3xl font-[900] text-fitexa-green tracking-tighter">
-                            Fitexa.in
+                        <Link href="/" className="flex items-center gap-2.5 text-3xl font-[900] text-fitexa-green tracking-tighter">
+                            <Image src="/logo.png" alt="Fitexa Logo" width={36} height={36} className="rounded-lg" unoptimized />
+                            Fitexa
                         </Link>
                     </div>
                     <div className="hidden md:flex space-x-12 items-center">

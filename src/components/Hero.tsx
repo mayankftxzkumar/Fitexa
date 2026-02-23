@@ -49,7 +49,7 @@ export default function Hero() {
                     </h1>
 
                     <p className="mt-8 text-xl md:text-2xl text-fitexa-beige/60 max-w-3xl mx-auto font-medium leading-relaxed mb-14 tracking-tight">
-                        Fitexa.in is your AI-powered front desk and growth engine. Automate leads, bookings, follow-ups, reviews, and visibility &mdash; all controlled from WhatsApp.
+                        Fitexa.in is your AI-powered front desk and growth engine. Automate leads, bookings, follow-ups, reviews, and visibility &mdash; all controlled from Telegram.
                     </p>
 
                     <div className="mt-12 flex flex-col sm:flex-row gap-8 justify-center items-center">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import type { AIProject } from '@/lib/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,6 +65,14 @@ export default function DashboardClient({ user }: { user: any }) {
         }
     };
 
+    const handleProjectClick = (project: AIProject) => {
+        if (project.status === 'active') {
+            router.push(`/ai/${project.id}`);
+        } else {
+            router.push(`/builder/${project.id}`);
+        }
+    };
+
     const formatDate = (d: string) => {
         const date = new Date(d);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -91,9 +100,11 @@ export default function DashboardClient({ user }: { user: any }) {
             </div>
 
             <div className="relative z-10 min-h-screen flex flex-col">
-                {/* Top Nav */}
+                {/* Top Nav — Logo icon only + avatar */}
                 <nav className="flex items-center justify-between px-6 md:px-10 py-5">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm ${isDarkMode ? 'bg-white text-black' : 'bg-[#0D4F31] text-white'}`}>F</div>
+                    <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2">
+                        <Image src="/logo.png" alt="Fitexa" width={36} height={36} className="rounded-lg" unoptimized />
+                    </button>
                     <div className="relative" ref={dropdownRef}>
                         <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="focus:outline-none group">
                             {avatarUrl ? (
@@ -168,17 +179,17 @@ export default function DashboardClient({ user }: { user: any }) {
                                             <span className={`ml-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${project.status === 'active'
                                                 ? (isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]')
                                                 : (isDarkMode ? 'bg-white/5 text-white/40' : 'bg-black/5 text-black/40')}`}>
-                                                {project.status}
+                                                {project.status === 'active' ? '● Active' : project.status}
                                             </span>
                                         </div>
                                         <p className={`text-[11px] mb-5 ${muted}`}>Updated {formatDate(project.updated_at)}</p>
                                         <button
-                                            onClick={() => router.push(`/builder/${project.id}`)}
+                                            onClick={() => handleProjectClick(project)}
                                             className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all border ${isDarkMode
                                                 ? 'border-white/10 text-white/70 hover:bg-white/5 hover:text-white'
                                                 : 'border-[#0D4F31]/15 text-[#0D4F31]/70 hover:bg-[#0D4F31]/5 hover:text-[#0D4F31]'}`}
                                         >
-                                            Edit
+                                            {project.status === 'active' ? 'Manage' : 'Continue Setup'}
                                         </button>
                                     </div>
                                 ))}

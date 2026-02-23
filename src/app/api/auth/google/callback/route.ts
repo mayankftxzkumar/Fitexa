@@ -44,37 +44,76 @@ export async function GET(request: NextRequest) {
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        // Fetch user's Google Business Locations to get the primary location ID
-        const locationResponse = await fetch('https://mybusinessbusinessinformation.googleapis.com/v1/accounts', {
+        // Fetch user's Google Business accounts
+        const accountsResponse = await fetch('https://mybusinessbusinessinformation.googleapis.com/v1/accounts', {
             headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
         });
 
-        const locationData = await locationResponse.json();
+        const accountsData = await accountsResponse.json();
         let locationId = '';
+        let businessName = '';
+        let businessLocation = '';
+        let businessCategory = '';
+        let businessDescription = '';
 
-        if (locationData.accounts && locationData.accounts.length > 0) {
-            // Usually, an account contains multiple locations. We fetch locations for their first account.
-            const accountName = locationData.accounts[0].name;
-            const locListResponse = await fetch(`https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations`, {
-                headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
-            });
+        if (accountsData.accounts && accountsData.accounts.length > 0) {
+            const accountName = accountsData.accounts[0].name;
+
+            // Fetch locations for the first account
+            const locListResponse = await fetch(
+                `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title,storefrontAddress,categories,profile`,
+                { headers: { 'Authorization': `Bearer ${tokenData.access_token}` } }
+            );
             const locListData = await locListResponse.json();
+
             if (locListData.locations && locListData.locations.length > 0) {
-                locationId = locListData.locations[0].name; // format is "locations/XXXXX"
+                const loc = locListData.locations[0];
+                locationId = loc.name || ''; // format: "locations/XXXXX"
+
+                // Extract business name from title
+                if (loc.title) {
+                    businessName = loc.title;
+                }
+
+                // Extract address
+                if (loc.storefrontAddress) {
+                    const addr = loc.storefrontAddress;
+                    const parts = [
+                        addr.locality,
+                        addr.administrativeArea,
+                        addr.regionCode,
+                    ].filter(Boolean);
+                    businessLocation = parts.join(', ');
+                }
+
+                // Extract primary category
+                if (loc.categories?.primaryCategory?.displayName) {
+                    businessCategory = loc.categories.primaryCategory.displayName;
+                }
+
+                // Extract profile description
+                if (loc.profile?.description) {
+                    businessDescription = loc.profile.description;
+                }
             }
         }
 
-        // Save tokens and location to DB
-        // If the user already authorized the app before, Google might omit the refresh_token.
-        // We only overwrite the refresh_token if a new one is provided.
+        // Save tokens, location, and business data to DB
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updatePayload: any = {
             google_access_token: tokenData.access_token,
             google_location_id: locationId,
         };
+
         if (tokenData.refresh_token) {
             updatePayload.google_refresh_token = tokenData.refresh_token;
         }
+
+        // Auto-fill business data from Google
+        if (businessName) updatePayload.business_name = businessName;
+        if (businessLocation) updatePayload.business_location = businessLocation;
+        if (businessCategory) updatePayload.business_category = businessCategory;
+        if (businessDescription) updatePayload.business_description = businessDescription;
 
         const { error: dbError } = await supabase
             .from('ai_projects')

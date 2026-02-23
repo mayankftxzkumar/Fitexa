@@ -9,7 +9,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "Fitexa | Where Fitness Businesses Grow with AI",
-  description: "Fitexa.in is your AI-powered front desk and growth engine. Automate leads, bookings, follow-ups, reviews, and visibility — all controlled from WhatsApp.",
+  description: "Fitexa.in is your AI-powered front desk and growth engine. Automate leads, bookings, follow-ups, reviews, and visibility — all controlled from Telegram.",
 };
 
 export default function RootLayout({

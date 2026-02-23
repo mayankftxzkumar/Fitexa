@@ -6,16 +6,16 @@ const features = [
         description: 'Instant lead replies, trial booking, automated follow-ups.',
     },
     {
-        title: 'WhatsApp Control',
-        description: 'Run your studio AI directly from WhatsApp commands.',
-    },
-    {
         title: 'Smart Growth Engine',
         description: 'Google review automation, SEO content generation, local visibility optimization.',
     },
     {
         title: 'Member Retention',
         description: 'Automated renewal reminders and engagement campaigns.',
+    },
+    {
+        title: 'Telegram Control',
+        description: 'Run your studio AI directly from Telegram — always connected.',
     }
 ];
 
