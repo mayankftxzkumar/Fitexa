@@ -241,6 +241,17 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                     <p className={`text-sm ${muted}`}>Tell us about the business this AI will serve.</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="md:col-span-2 mb-2 p-5 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-center justify-between">
+                                        <div>
+                                            <p className={`font-bold text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Google Business Automation (Pro)</p>
+                                            <p className={`text-xs mt-1 ${muted}`}>Connect your Google Business Profile to let AI auto-reply to reviews and post updates.</p>
+                                        </div>
+                                        <button
+                                            onClick={() => window.location.href = `/api/auth/google?projectId=${initialProject.id}`}
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border shrink-0 ${initialProject.google_access_token ? (isDarkMode ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-green-600/10 border-green-600/20 text-green-700') : (isDarkMode ? 'bg-white/10 border-white/20 hover:bg-white/15' : 'bg-black/5 border-black/10 hover:bg-black/10')}`}>
+                                            {initialProject.google_access_token ? '✓ Connected' : 'Connect Google'}
+                                        </button>
+                                    </div>
                                     <div>
                                         <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${muted}`}>Business Name</label>
                                         <input type="text" value={bizName} onChange={e => setBizName(e.target.value)} className={inputClass} placeholder="FitGym Pro" />

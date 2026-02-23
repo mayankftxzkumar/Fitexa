@@ -1,0 +1,12 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/google-reviews",
+            "schedule": "0 * * * *"
+        },
+        {
+            "path": "/api/cron/telegram-tasks",
+            "schedule": "0 18 * * *"
+        }
+    ]
+}

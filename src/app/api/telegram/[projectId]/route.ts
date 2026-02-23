@@ -8,15 +8,29 @@ const perplexityKey = process.env.PERPLEXITY_API_KEY!;
 // Feature-based prompt instructions
 const FEATURE_PROMPTS: Record<string, string> = {
     auto_lead_reply:
-        'When a user shows interest, collect their full name and preferred visit/call time. Be proactive about converting leads into walk-ins or trials.',
+        `When a user shows interest (e.g., wants to join, asks about pricing, wants a visit), collect their full name and preferred visit/call time. Be proactive about converting leads into walk-ins or trials.
+IMPORTANT: Once you have gathered a lead's name and intent, you MUST append the following hidden tag at the very end of your response (after your normal text):
+[LEAD_ACTION: {"name": "<user name>", "contact": "<phone or info if shared>", "intent": "<what they want, e.g. trial, membership, visit>"}]
+Only include this tag when you have at least a name AND intent. Never show this tag text to the user in your visible reply.`,
+
     trial_booking:
-        'Guide the user step-by-step to book a free trial session. Ask for their name, preferred date and time, and confirm the booking clearly.',
+        `Guide the user step-by-step to book a free trial session. Ask for their name, preferred date and time, and confirm the booking clearly.
+When booking is confirmed, append this hidden tag at the end of your response:
+[LEAD_ACTION: {"name": "<user name>", "contact": "<if shared>", "intent": "trial_booking"}]`,
+
     follow_up_reminder:
-        'If the user seems interested but not ready to commit, politely suggest you will follow up soon. Encourage them to come back.',
+        `If the user seems interested but not ready to commit, politely suggest you will follow up soon. Encourage them to come back.
+When a follow-up is warranted, append this hidden tag at the end of your response:
+[FOLLOWUP_ACTION: {"reason": "<why follow up>", "delay_hours": 24}]
+Only include this when the user shows interest but does not commit.`,
+
     seo_content:
         'If the user asks for promotional content, social media posts, or SEO text, generate high-quality, engaging promotional copy for the business.',
+
     renewal_reminder:
-        'If the user mentions membership or renewal, help them understand renewal options and encourage timely renewal.',
+        `If the user mentions membership or renewal, help them understand renewal options and encourage timely renewal.
+When renewal interest is detected, append this hidden tag at the end of your response:
+[LEAD_ACTION: {"name": "<user name>", "contact": "<if shared>", "intent": "renewal"}]`,
 };
 
 function buildSystemPrompt(project: {
@@ -46,7 +60,44 @@ CORE RULES:
 ENABLED CAPABILITIES:
 ${featureInstructions || '- Respond helpfully to all inquiries about the business.'}
 
+CRITICAL FORMATTING RULE:
+- Action tags like [LEAD_ACTION: ...] and [FOLLOWUP_ACTION: ...] are INTERNAL ONLY.
+- They must appear ONLY at the very end of your response, after your normal human-readable text.
+- The user must NEVER see these tags. They are for the system to extract data.
+- If you have no action to report, do NOT include any tags.
+
 Always be warm, helpful, and action-oriented. End messages with a clear next step or question when appropriate.`;
+}
+
+// Parse action tags from AI response and strip them from the visible text
+function parseActionTags(response: string): {
+    cleanText: string;
+    leadAction: { name?: string; contact?: string; intent?: string } | null;
+    followUpAction: { reason?: string; delay_hours?: number } | null;
+} {
+    let cleanText = response;
+    let leadAction = null;
+    let followUpAction = null;
+
+    // Extract [LEAD_ACTION: {...}]
+    const leadMatch = response.match(/\[LEAD_ACTION:\s*(\{[^}]+\})\]/);
+    if (leadMatch) {
+        try {
+            leadAction = JSON.parse(leadMatch[1]);
+        } catch { /* ignore parse errors */ }
+        cleanText = cleanText.replace(leadMatch[0], '').trim();
+    }
+
+    // Extract [FOLLOWUP_ACTION: {...}]
+    const followUpMatch = response.match(/\[FOLLOWUP_ACTION:\s*(\{[^}]+\})\]/);
+    if (followUpMatch) {
+        try {
+            followUpAction = JSON.parse(followUpMatch[1]);
+        } catch { /* ignore parse errors */ }
+        cleanText = cleanText.replace(followUpMatch[0], '').trim();
+    }
+
+    return { cleanText, leadAction, followUpAction };
 }
 
 export async function POST(
@@ -66,24 +117,22 @@ export async function POST(
         const chatId = message.chat.id;
         const userText = message.text;
 
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
         // Skip commands like /start
         if (userText.startsWith('/start')) {
-            const welcomeText = 'Hey there! 👋 Welcome! How can I help you today?';
-            // We still need the project to get the token
-            const supabase = createClient(supabaseUrl, supabaseKey);
             const { data: proj } = await supabase
                 .from('ai_projects')
-                .select('telegram_token')
+                .select('telegram_token, business_name')
                 .eq('id', projectId)
                 .eq('status', 'active')
                 .single();
             if (proj?.telegram_token) {
+                const welcomeText = `Hey there! 👋 Welcome to ${proj.business_name || 'our business'}! How can I help you today?`;
                 await sendTelegramMessage(proj.telegram_token, chatId, welcomeText);
             }
             return NextResponse.json({ ok: true });
         }
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Fetch project
         const { data: project, error: projError } = await supabase
@@ -140,11 +189,40 @@ export async function POST(
             return NextResponse.json({ ok: true });
         }
 
-        // Update conversation history
+        // Parse action tags from AI response
+        const { cleanText, leadAction, followUpAction } = parseActionTags(aiResponse);
+
+        // Save lead if detected
+        if (leadAction && leadAction.name) {
+            await supabase.from('ai_leads').insert({
+                project_id: projectId,
+                chat_id: chatId,
+                name: leadAction.name,
+                contact_info: leadAction.contact || '',
+                interest_level: leadAction.intent || 'general',
+                status: 'new',
+            });
+        }
+
+        // Schedule follow-up task if detected
+        if (followUpAction) {
+            const delayHours = followUpAction.delay_hours || 24;
+            const executeAt = new Date(Date.now() + delayHours * 60 * 60 * 1000).toISOString();
+            await supabase.from('ai_tasks').insert({
+                project_id: projectId,
+                chat_id: chatId,
+                action_type: 'follow_up',
+                context: { reason: followUpAction.reason || 'User showed interest' },
+                execute_at: executeAt,
+                status: 'pending',
+            });
+        }
+
+        // Update conversation history (store clean text without tags)
         const updatedMessages = [
             ...existingMessages,
             { role: 'user', content: userText },
-            { role: 'assistant', content: aiResponse },
+            { role: 'assistant', content: cleanText },
         ].slice(-20); // Keep last 20 messages total
 
         if (convo) {
@@ -160,8 +238,8 @@ export async function POST(
             });
         }
 
-        // Send response to Telegram
-        await sendTelegramMessage(project.telegram_token, chatId, aiResponse);
+        // Send clean response to Telegram (tags stripped)
+        await sendTelegramMessage(project.telegram_token, chatId, cleanText);
 
         return NextResponse.json({ ok: true });
     } catch (error) {
@@ -181,7 +259,7 @@ async function callPerplexity(messages: Array<{ role: string; content: string }>
             body: JSON.stringify({
                 model: 'sonar',
                 messages,
-                max_tokens: 400,
+                max_tokens: 500,
                 temperature: 0.7,
             }),
         });

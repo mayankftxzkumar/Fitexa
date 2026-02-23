@@ -13,6 +13,34 @@ export interface AIProject {
     current_step: number;
     created_at: string;
     updated_at: string;
+    google_access_token?: string;
+    google_refresh_token?: string;
+    google_location_id?: string;
+}
+
+export interface AILead {
+    id: string;
+    project_id: string;
+    chat_id: number;
+    name?: string;
+    contact_info?: string;
+    interest_level?: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AITask {
+    id: string;
+    project_id: string;
+    chat_id?: number;
+    action_type: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    context: any;
+    execute_at: string;
+    status: 'pending' | 'completed' | 'failed';
+    created_at: string;
+    updated_at: string;
 }
 
 export interface AIFeature {
