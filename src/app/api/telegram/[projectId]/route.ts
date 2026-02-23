@@ -8,28 +8,15 @@ const perplexityKey = process.env.PERPLEXITY_API_KEY!;
 // ────────────────────────────────────────────────────────
 const FEATURE_PROMPTS: Record<string, string> = {
     auto_lead_reply:
-        `When a user shows interest (e.g., wants to join, asks about pricing, wants a visit), collect their full name and preferred visit/call time. Be proactive about converting leads into walk-ins or trials.
-IMPORTANT: Once you have gathered a lead's name and intent, append this hidden tag at the very end of your response:
-[LEAD_ACTION: {"name": "<user name>", "contact": "<phone or info if shared>", "intent": "<what they want>"}]
-Only include this tag when you have at least a name AND intent.`,
-
+        'When a user shows interest, collect their full name and preferred visit/call time. Be proactive about converting leads.',
     trial_booking:
-        `Guide the user step-by-step to book a free trial session. Ask for their name, preferred date and time, and confirm the booking clearly.
-When booking is confirmed, append this tag:
-[LEAD_ACTION: {"name": "<user name>", "contact": "<if shared>", "intent": "trial_booking"}]`,
-
+        'Guide the user to book a free trial session. Ask for name, preferred date and time.',
     follow_up_reminder:
-        `If the user seems interested but not ready to commit, politely suggest you will follow up soon.
-When a follow-up is warranted, append this tag:
-[FOLLOWUP_ACTION: {"reason": "<why follow up>", "delay_hours": 24}]`,
-
+        'If the user seems interested but not ready, politely suggest following up.',
     seo_content:
-        'If the user asks for promotional content, social media posts, or SEO text, generate high-quality, engaging promotional copy for the business.',
-
+        'If asked for promotional content, generate high-quality engaging copy.',
     renewal_reminder:
-        `If the user mentions membership or renewal, help them understand renewal options and encourage timely renewal.
-When renewal interest is detected, append this tag:
-[LEAD_ACTION: {"name": "<user name>", "contact": "<if shared>", "intent": "renewal"}]`,
+        'If the user mentions membership or renewal, help them understand renewal options.',
 };
 
 // ────────────────────────────────────────────────────────
@@ -42,95 +29,15 @@ function buildSystemPrompt(project: {
     business_description: string;
     enabled_features: string[];
 }): string {
-    const featureInstructions = (project.enabled_features || [])
+    const features = (project.enabled_features || [])
         .filter((f: string) => FEATURE_PROMPTS[f])
         .map((f: string) => `- ${FEATURE_PROMPTS[f]}`)
         .join('\n');
 
-    return `You are the professional AI assistant for "${project.business_name}", a ${project.business_category} business located in ${project.business_location}.
-
-Business description: ${project.business_description || 'A professional fitness business.'}
-
-CORE RULES:
-- You represent this business directly. Never reveal you are an AI.
-- Speak as "we" (the business team). Be friendly, concise, persuasive.
-- Your goal is to convert every conversation into a lead, booking, or visit.
-- Keep replies short (2-4 sentences max unless detail is requested).
-- Do NOT include citations or references like [1], [2], etc.
-- Do NOT use markdown formatting like ** or __ or backticks.
-
-ENABLED CAPABILITIES:
-${featureInstructions || '- Respond helpfully to all inquiries about the business.'}
-
-Action tags like [LEAD_ACTION: ...] and [FOLLOWUP_ACTION: ...] are INTERNAL ONLY. They must appear ONLY at the very end of your response. The user must NEVER see these tags.
-
-Always be warm, helpful, and action-oriented.`;
-}
-
-// ────────────────────────────────────────────────────────
-// Parse action tags from AI response
-// ────────────────────────────────────────────────────────
-function parseActionTags(response: string): {
-    cleanText: string;
-    leadAction: { name?: string; contact?: string; intent?: string } | null;
-    followUpAction: { reason?: string; delay_hours?: number } | null;
-} {
-    let cleanText = response;
-    let leadAction = null;
-    let followUpAction = null;
-
-    const leadMatch = response.match(/\[LEAD_ACTION:\s*(\{[^}]+\})\]/);
-    if (leadMatch) {
-        try { leadAction = JSON.parse(leadMatch[1]); } catch { /* ignore */ }
-        cleanText = cleanText.replace(leadMatch[0], '').trim();
-    }
-
-    const followUpMatch = response.match(/\[FOLLOWUP_ACTION:\s*(\{[^}]+\})\]/);
-    if (followUpMatch) {
-        try { followUpAction = JSON.parse(followUpMatch[1]); } catch { /* ignore */ }
-        cleanText = cleanText.replace(followUpMatch[0], '').trim();
-    }
-
-    return { cleanText, leadAction, followUpAction };
-}
-
-// ────────────────────────────────────────────────────────
-// Sanitize message for Telegram — strip ALL markdown
-// ────────────────────────────────────────────────────────
-function sanitizeForTelegram(text: string): string {
-    let safe = text;
-
-    // Strip citation markers like [1], [2], [1][2]
-    safe = safe.replace(/\[\d+\]/g, '');
-
-    // Strip markdown bold **text** and __text__
-    safe = safe.replace(/\*\*(.*?)\*\*/g, '$1');
-    safe = safe.replace(/__(.*?)__/g, '$1');
-
-    // Strip markdown italic *text* and _text_
-    safe = safe.replace(/\*(.*?)\*/g, '$1');
-    safe = safe.replace(/_(.*?)_/g, '$1');
-
-    // Strip backticks (inline code and code blocks)
-    safe = safe.replace(/```[\s\S]*?```/g, '');
-    safe = safe.replace(/`(.*?)`/g, '$1');
-
-    // Strip markdown links [text](url) -> text
-    safe = safe.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
-    // Clean up multiple spaces and newlines
-    safe = safe.replace(/  +/g, ' ');
-    safe = safe.replace(/\n{3,}/g, '\n\n');
-
-    // Trim and ensure non-empty
-    safe = safe.trim();
-
-    // Truncate to 4000 chars (Telegram limit is 4096)
-    if (safe.length > 4000) {
-        safe = safe.substring(0, 4000) + '...';
-    }
-
-    return safe || "Thanks for your message! I'm here to help 😊";
+    return `You are the professional AI assistant for "${project.business_name}", a ${project.business_category} business in ${project.business_location}.
+Business: ${project.business_description || 'A professional fitness business.'}
+Rules: Speak as the business team ("we"). Be friendly and concise (2-4 sentences). Never say you are AI. Do NOT use markdown. Do NOT use citations like [1]. Keep it plain text.
+${features ? 'Capabilities:\n' + features : ''}`;
 }
 
 // ────────────────────────────────────────────────────────
@@ -141,222 +48,230 @@ export async function POST(
     { params }: { params: Promise<{ projectId: string }> }
 ) {
     const { projectId } = await params;
-    console.log(`[WEBHOOK] ====== Incoming update for project: ${projectId} ======`);
+    console.log(`[WH] === Update for project ${projectId} ===`);
 
     try {
         const body = await request.json();
-        console.log(`[WEBHOOK] Update payload keys: ${Object.keys(body).join(', ')}`);
 
-        // ── Step 1: Extract chat_id and text STRICTLY from update.message ──
-        const message = body?.message;
-        if (!message) {
-            console.log(`[WEBHOOK] No message field in update — ignoring (callback/edit/etc)`);
+        // ── Extract chat_id and text ──
+        const msg = body?.message;
+        if (!msg) {
+            console.log('[WH] No message field — skip');
             return NextResponse.json({ ok: true });
         }
 
-        const chatId = message.chat?.id;
-        if (!chatId) {
-            console.error(`[WEBHOOK] CRITICAL: No chat.id in message — cannot reply`);
+        const chatId = msg.chat?.id;
+        if (!chatId && chatId !== 0) {
+            console.log('[WH] No chat.id — skip');
             return NextResponse.json({ ok: true });
         }
 
-        const userText = message.text;
+        const userText = msg.text;
         if (!userText || typeof userText !== 'string') {
-            console.log(`[WEBHOOK] Non-text message (photo/sticker/etc) from chat ${chatId} — ignoring`);
+            console.log('[WH] No text — skip');
             return NextResponse.json({ ok: true });
         }
 
-        console.log(`[WEBHOOK] chat_id: ${chatId}, text: "${userText.substring(0, 80)}"`);
+        // Force chatId to number
+        const numericChatId = Number(chatId);
+        console.log(`[WH] chatId=${numericChatId} (type=${typeof numericChatId}), text="${userText.substring(0, 60)}"`);
 
-        // ── Step 2: Load project using admin client ──
+        // ── Load project ──
         const supabase = createAdminClient();
-
-        const { data: project, error: projError } = await supabase
+        const { data: project, error: err } = await supabase
             .from('ai_projects')
             .select('*')
             .eq('id', projectId)
             .single();
 
-        if (projError || !project) {
-            console.error(`[WEBHOOK] Project ${projectId} not found:`, projError?.message);
+        if (err || !project) {
+            console.error('[WH] Project not found');
             return NextResponse.json({ ok: true });
         }
-
-        if (project.status !== 'active') {
-            console.error(`[WEBHOOK] Project ${projectId} not active (status: ${project.status})`);
+        if (project.status !== 'active' || !project.telegram_token) {
+            console.error('[WH] Project not active or no token');
             return NextResponse.json({ ok: true });
         }
 
         const token = project.telegram_token;
-        if (!token) {
-            console.error(`[WEBHOOK] No telegram_token for project ${projectId}`);
-            return NextResponse.json({ ok: true });
-        }
+        console.log(`[WH] Project loaded, token starts with: ${token.substring(0, 15)}...`);
 
-        console.log(`[WEBHOOK] Project loaded: "${project.ai_name}", status: ${project.status}, token present: true`);
-
-        // ── Step 3: Handle /start command ──
+        // ── Handle /start ──
         if (userText.startsWith('/start')) {
-            const welcomeMsg = `Hey there! 👋 Welcome to ${project.business_name || 'our business'}! How can I help you today?`;
-            console.log(`[WEBHOOK] /start command — sending welcome`);
-            await sendToTelegram(token, chatId, welcomeMsg);
+            const welcome = `Hey! Welcome to ${project.business_name || 'our business'}! How can I help you today?`;
+            await telegramSend(token, numericChatId, welcome);
             return NextResponse.json({ ok: true });
         }
 
-        // ── Step 4: Load conversation history ──
+        // ── Load conversation history ──
         const { data: convo } = await supabase
             .from('ai_conversations')
             .select('*')
             .eq('project_id', projectId)
-            .eq('chat_id', String(chatId))
+            .eq('chat_id', String(numericChatId))
             .single();
 
-        const existingMessages: Array<{ role: string; content: string }> = convo?.messages || [];
-        const recentHistory = existingMessages.slice(-10);
-        console.log(`[WEBHOOK] Conversation history: ${existingMessages.length} total, using last ${recentHistory.length}`);
+        const history: Array<{ role: string; content: string }> = convo?.messages || [];
 
-        // ── Step 5: Call Perplexity AI ──
-        const systemPrompt = buildSystemPrompt(project);
-        const apiMessages = [
-            { role: 'system', content: systemPrompt },
-            ...recentHistory,
+        // ── Call Perplexity ──
+        console.log('[WH] Calling Perplexity...');
+        const aiRaw = await callPerplexity([
+            { role: 'system', content: buildSystemPrompt(project) },
+            ...history.slice(-10),
             { role: 'user', content: userText },
-        ];
+        ]);
 
-        console.log(`[WEBHOOK] Calling Perplexity API...`);
-        const aiResponse = await callPerplexity(apiMessages);
-        console.log(`[WEBHOOK] Perplexity returned: ${aiResponse ? aiResponse.length + ' chars' : 'NULL'}`);
-
-        // ── Step 6: Prepare safe message ──
-        let safeMessage: string;
-        if (!aiResponse || aiResponse.trim().length === 0) {
-            safeMessage = `Thanks for reaching out to ${project.business_name || 'us'}! We're here to help. Our team will get back to you shortly. 🙏`;
-            console.log(`[WEBHOOK] Using fallback message (Perplexity failed or empty)`);
+        // ── Prepare safe reply ──
+        let reply: string;
+        if (!aiRaw || aiRaw.trim().length === 0) {
+            reply = `Thanks for reaching out to ${project.business_name}! Our team will get back to you shortly.`;
+            console.log('[WH] Perplexity failed, using fallback');
         } else {
-            const { cleanText, leadAction, followUpAction } = parseActionTags(aiResponse);
-            safeMessage = sanitizeForTelegram(cleanText);
-            console.log(`[WEBHOOK] Sanitized message: ${safeMessage.length} chars, lead: ${!!leadAction}, followup: ${!!followUpAction}`);
+            // Strip action tags
+            reply = aiRaw
+                .replace(/\[LEAD_ACTION:\s*\{[^}]*\}\]/g, '')
+                .replace(/\[FOLLOWUP_ACTION:\s*\{[^}]*\}\]/g, '')
+                .trim();
 
-            // Save lead if detected
-            if (leadAction && leadAction.name) {
-                await supabase.from('ai_leads').insert({
-                    project_id: projectId,
-                    chat_id: String(chatId),
-                    name: leadAction.name,
-                    contact_info: leadAction.contact || '',
-                    interest_level: leadAction.intent || 'general',
-                    status: 'new',
-                });
+            // Strip ALL markdown and citations
+            reply = reply
+                .replace(/\[\d+\]/g, '')       // [1], [2]
+                .replace(/\*\*(.*?)\*\*/g, '$1') // **bold**
+                .replace(/__(.*?)__/g, '$1')     // __underline__
+                .replace(/\*(.*?)\*/g, '$1')     // *italic*
+                .replace(/_(.*?)_/g, '$1')       // _italic_
+                .replace(/`([^`]*)`/g, '$1')     // `code`
+                .replace(/```[\s\S]*?```/g, '')  // ```code blocks```
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url)
+                .replace(/  +/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+            if (reply.length > 4000) {
+                reply = reply.substring(0, 4000) + '...';
             }
-
-            // Schedule follow-up if detected
-            if (followUpAction) {
-                const delayHours = followUpAction.delay_hours || 24;
-                await supabase.from('ai_tasks').insert({
-                    project_id: projectId,
-                    chat_id: String(chatId),
-                    action_type: 'follow_up',
-                    context: { reason: followUpAction.reason || 'User showed interest' },
-                    execute_at: new Date(Date.now() + delayHours * 3600000).toISOString(),
-                    status: 'pending',
-                });
+            if (reply.length === 0) {
+                reply = "Thanks for your message! I'm here to help.";
             }
         }
 
-        // ── Step 7: Save conversation to DB ──
-        const updatedMessages = [
-            ...existingMessages,
+        console.log(`[WH] Reply prepared (${reply.length} chars): "${reply.substring(0, 80)}..."`);
+
+        // ── Save to DB ──
+        const updated = [
+            ...history,
             { role: 'user', content: userText },
-            { role: 'assistant', content: safeMessage },
+            { role: 'assistant', content: reply },
         ].slice(-20);
 
         if (convo) {
-            await supabase
-                .from('ai_conversations')
-                .update({ messages: updatedMessages })
-                .eq('id', convo.id);
+            await supabase.from('ai_conversations').update({ messages: updated }).eq('id', convo.id);
         } else {
             await supabase.from('ai_conversations').insert({
                 project_id: projectId,
-                chat_id: String(chatId),
-                messages: updatedMessages,
+                chat_id: String(numericChatId),
+                messages: updated,
             });
         }
-        console.log(`[WEBHOOK] Conversation saved to DB`);
+        console.log('[WH] DB saved');
 
-        // ── Step 8: SEND REPLY TO TELEGRAM — THIS IS THE CRITICAL STEP ──
-        console.log(`[WEBHOOK] >>>>>> SENDING MESSAGE TO TELEGRAM <<<<<<`);
-        console.log(`[WEBHOOK] Token (first 10): ${token.substring(0, 10)}...`);
-        console.log(`[WEBHOOK] Chat ID: ${chatId} (type: ${typeof chatId})`);
-        console.log(`[WEBHOOK] Message length: ${safeMessage.length}`);
-        console.log(`[WEBHOOK] Message preview: "${safeMessage.substring(0, 100)}..."`);
-
-        const sendSuccess = await sendToTelegram(token, chatId, safeMessage);
-
-        console.log(`[WEBHOOK] >>>>>> SEND RESULT: ${sendSuccess ? 'SUCCESS ✅' : 'FAILED ❌'} <<<<<<`);
-        console.log(`[WEBHOOK] ====== Done processing for project ${projectId} ======`);
+        // ── SEND TO TELEGRAM ──
+        console.log('[WH] >>> SENDING TO TELEGRAM <<<');
+        const sent = await telegramSend(token, numericChatId, reply);
+        console.log(`[WH] >>> RESULT: ${sent ? 'DELIVERED' : 'FAILED'} <<<`);
 
         return NextResponse.json({ ok: true });
     } catch (error) {
-        console.error(`[WEBHOOK] UNEXPECTED ERROR for project ${projectId}:`, error);
-        return NextResponse.json({ ok: true }); // Always 200
+        console.error('[WH] CRASH:', error);
+        return NextResponse.json({ ok: true });
     }
 }
 
 // ────────────────────────────────────────────────────────
-// Send message to Telegram — GUARANTEED awaited, returns success boolean
+// Send to Telegram — full error capture
 // ────────────────────────────────────────────────────────
-async function sendToTelegram(token: string, chatId: number, text: string): Promise<boolean> {
+async function telegramSend(token: string, chatId: number, text: string): Promise<boolean> {
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    const payload = {
-        chat_id: chatId,
-        text: text,
-    };
 
-    console.log(`[TELEGRAM-SEND] POST ${url}`);
-    console.log(`[TELEGRAM-SEND] Payload: chat_id=${chatId}, text_length=${text.length}`);
+    // Build the simplest possible payload
+    const body = JSON.stringify({
+        chat_id: chatId,
+        text: text
+    });
+
+    console.log(`[TG] POST sendMessage | chat_id=${chatId} | text_len=${text.length}`);
+    console.log(`[TG] Payload: ${body.substring(0, 200)}`);
 
     try {
-        const response = await fetch(url, {
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: body,
         });
 
-        const responseText = await response.text();
-        console.log(`[TELEGRAM-SEND] HTTP status: ${response.status}`);
-        console.log(`[TELEGRAM-SEND] Raw response: ${responseText}`);
+        const raw = await res.text();
+
+        // Log the FULL raw response — split if needed for Vercel log limit
+        console.log(`[TG] HTTP ${res.status}`);
+        console.log(`[TG] Response: ${raw}`);
 
         let data;
         try {
-            data = JSON.parse(responseText);
+            data = JSON.parse(raw);
         } catch {
-            console.error(`[TELEGRAM-SEND] Failed to parse response JSON`);
+            console.error('[TG] Could not parse response JSON');
             return false;
         }
 
         if (data.ok === true) {
-            console.log(`[TELEGRAM-SEND] ✅ Message delivered to chat ${chatId} (message_id: ${data.result?.message_id})`);
+            console.log(`[TG] DELIVERED msg_id=${data.result?.message_id}`);
             return true;
-        } else {
-            console.error(`[TELEGRAM-SEND] ❌ Telegram API error: ${data.error_code} — ${data.description}`);
-            return false;
         }
+
+        // Log FULL error details
+        console.error(`[TG] FAILED error_code=${data.error_code}`);
+        console.error(`[TG] FAILED description=${data.description}`);
+        console.error(`[TG] FAILED full=${JSON.stringify(data)}`);
+
+        // If error, retry with ultra-simple message
+        if (data.error_code === 400) {
+            console.log('[TG] Retrying with simple test message...');
+            const retryRes = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: 'Hello! Thanks for your message.'
+                }),
+            });
+            const retryRaw = await retryRes.text();
+            console.log(`[TG] Retry response: ${retryRaw}`);
+            const retryData = JSON.parse(retryRaw);
+            if (retryData.ok) {
+                console.log('[TG] Retry succeeded — original message content was the problem');
+                return true;
+            } else {
+                console.error('[TG] Retry also failed — chat_id or token issue');
+                console.error(`[TG] Retry error: ${retryData.description}`);
+                return false;
+            }
+        }
+
+        return false;
     } catch (error) {
-        console.error(`[TELEGRAM-SEND] ❌ Network/fetch error:`, error);
+        console.error('[TG] Network error:', error);
         return false;
     }
 }
 
 // ────────────────────────────────────────────────────────
-// Perplexity API call
+// Perplexity API
 // ────────────────────────────────────────────────────────
 async function callPerplexity(messages: Array<{ role: string; content: string }>): Promise<string | null> {
     if (!perplexityKey) {
-        console.error('[PERPLEXITY] API key not configured');
+        console.error('[PPX] No API key');
         return null;
     }
-
     try {
         const res = await fetch('https://api.perplexity.ai/chat/completions', {
             method: 'POST',
@@ -371,22 +286,14 @@ async function callPerplexity(messages: Array<{ role: string; content: string }>
                 temperature: 0.7,
             }),
         });
-
         if (!res.ok) {
-            const errText = await res.text();
-            console.error(`[PERPLEXITY] API error ${res.status}: ${errText}`);
+            console.error(`[PPX] Error ${res.status}: ${await res.text()}`);
             return null;
         }
-
         const data = await res.json();
-        const content = data?.choices?.[0]?.message?.content;
-        if (!content) {
-            console.error('[PERPLEXITY] Empty response');
-            return null;
-        }
-        return content;
+        return data?.choices?.[0]?.message?.content || null;
     } catch (error) {
-        console.error('[PERPLEXITY] Error:', error);
+        console.error('[PPX] Error:', error);
         return null;
     }
 }
@@ -395,5 +302,5 @@ async function callPerplexity(messages: Array<{ role: string; content: string }>
 // GET — Health check
 // ────────────────────────────────────────────────────────
 export async function GET() {
-    return NextResponse.json({ status: 'Telegram webhook endpoint active' });
+    return NextResponse.json({ status: 'active' });
 }
