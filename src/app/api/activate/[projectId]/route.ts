@@ -1,8 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function POST(
     request: NextRequest,
@@ -10,13 +7,20 @@ export async function POST(
 ) {
     try {
         const { projectId } = await params;
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabase = await createClient();
 
-        // Fetch project
+        // Verify user is authenticated
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Fetch project (RLS ensures user can only see their own)
         const { data: project, error } = await supabase
             .from('ai_projects')
             .select('*')
             .eq('id', projectId)
+            .eq('user_id', user.id)
             .single();
 
         if (error || !project) {
@@ -28,7 +32,6 @@ export async function POST(
         }
 
         // Determine the public webhook URL
-        // In production, use your domain. In dev, you need a tunnel (ngrok etc.)
         const host = request.headers.get('host') || 'localhost:3000';
         const protocol = host.includes('localhost') ? 'http' : 'https';
         const webhookUrl = `${protocol}://${host}/api/telegram/${projectId}`;
