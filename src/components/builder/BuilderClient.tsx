@@ -434,19 +434,39 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                         {step === 3 && (
                             <div className="space-y-6">
                                 <div>
-                                    <h2 className="text-lg font-bold mb-1">Telegram Bot Connection</h2>
-                                    <p className={`text-sm ${muted}`}>Connect a Telegram bot to power your AI agent.</p>
+                                    <h2 className="text-lg font-bold mb-1">Connect Your Telegram Bot</h2>
+                                    <p className={`text-sm ${muted}`}>Your AI agent will chat with customers through a Telegram bot. It only takes 2 minutes to set up!</p>
                                 </div>
 
-                                <div className={`rounded-xl p-5 text-sm space-y-3 ${isDarkMode ? 'bg-[#86efac]/5 border border-[#86efac]/10' : 'bg-[#0D4F31]/5 border border-[#0D4F31]/10'}`}>
-                                    <p className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>How to create your bot</p>
-                                    <ol className={`list-decimal list-inside space-y-1.5 ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>
-                                        <li>Open Telegram and search for <strong>@BotFather</strong></li>
-                                        <li>Send <code className={`px-1.5 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>/newbot</code> and follow the prompts</li>
-                                        <li>Choose a name and username for your bot</li>
-                                        <li>Copy the <strong>API token</strong> BotFather gives you</li>
-                                        <li>Paste it below</li>
-                                    </ol>
+                                <div className={`rounded-xl p-6 text-sm space-y-4 ${isDarkMode ? 'bg-[#86efac]/5 border border-[#86efac]/10' : 'bg-[#0D4F31]/5 border border-[#0D4F31]/10'}`}>
+                                    <p className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>📱 Quick Setup Guide</p>
+                                    <div className={`space-y-3.5 ${isDarkMode ? 'text-white/70' : 'text-black/70'}`}>
+                                        <div className="flex items-start gap-3">
+                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>1</span>
+                                            <p>Open <strong>Telegram</strong> on your phone or desktop and search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className={`font-bold underline ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>@BotFather</a></p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>2</span>
+                                            <p>Tap <strong>Start</strong>, then type <code className={`px-1.5 py-0.5 rounded text-xs font-bold ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>/newbot</code> and send it</p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>3</span>
+                                            <p>Give your bot a <strong>display name</strong> (e.g. &quot;{initialProject?.business_name || 'My Business'} AI&quot;) and a <strong>username</strong> ending in <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>bot</code></p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>4</span>
+                                            <p>BotFather will send you an <strong>API token</strong> — it looks like <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>123456:ABC-xyz...</code></p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>5</span>
+                                            <p><strong>Copy</strong> that token and <strong>paste it below</strong> ↓</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={`rounded-xl p-4 ${isDarkMode ? 'bg-white/[0.02] border border-white/[0.06]' : 'bg-black/[0.02] border border-black/[0.05]'}`}>
+                                    <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-yellow-400/80' : 'text-yellow-700'}`}>💡 Pro Tip</p>
+                                    <p className={`text-xs ${muted}`}>Already have a bot? You can use an existing one too — just get its token from @BotFather by sending <code className={`px-1 py-0.5 rounded text-[11px] ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>/mybots</code> and selecting your bot → API Token.</p>
                                 </div>
 
                                 <div>
