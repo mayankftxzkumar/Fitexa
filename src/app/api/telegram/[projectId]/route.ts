@@ -202,7 +202,10 @@ export async function POST(
         }
 
         // ── Parse action tags ──
-        const { cleanText, leadAction, followUpAction } = parseActionTags(aiResponse);
+        const { cleanText: rawCleanText, leadAction, followUpAction } = parseActionTags(aiResponse);
+
+        // Strip Perplexity citation markers like [1], [2], [1][2] etc.
+        const cleanText = rawCleanText.replace(/\[\d+\]/g, '').replace(/\s{2,}/g, ' ').trim();
         console.log(`[WEBHOOK ${projectId}] AI response generated (${cleanText.length} chars), lead: ${!!leadAction}, followup: ${!!followUpAction}`);
 
         // ── Save lead if detected ──
@@ -238,7 +241,7 @@ export async function POST(
             ...existingMessages,
             { role: 'user', content: userText },
             { role: 'assistant', content: cleanText },
-        ].slice(-20); // Keep last 20 messages total
+        ].slice(-20);
 
         if (convo) {
             await supabase
@@ -252,10 +255,12 @@ export async function POST(
                 messages: updatedMessages,
             });
         }
+        console.log(`[WEBHOOK ${projectId}] Conversation saved to DB`);
 
-        // ── Send clean response to Telegram ──
-        console.log(`[WEBHOOK ${projectId}] Sending reply to chat ${chatId}`);
-        await sendTelegramMessage(project.telegram_token, chatId, cleanText);
+        // ── CRITICAL: Send reply back to Telegram ──
+        console.log(`[WEBHOOK ${projectId}] Sending reply to Telegram chat ${chatId}...`);
+        const sendResult = await sendTelegramMessage(project.telegram_token, chatId, cleanText);
+        console.log(`[WEBHOOK ${projectId}] sendMessage result: ${sendResult ? 'SUCCESS' : 'FAILED'}`);
 
         return NextResponse.json({ ok: true });
     } catch (error) {
@@ -311,36 +316,35 @@ async function callPerplexity(messages: Array<{ role: string; content: string }>
 }
 
 // ────────────────────────────────────────────────────────
-// Send message to Telegram
+// Send message to Telegram — returns true on success
 // ────────────────────────────────────────────────────────
-async function sendTelegramMessage(token: string, chatId: number, text: string) {
+async function sendTelegramMessage(token: string, chatId: number, text: string): Promise<boolean> {
+    // Send as plain text (no parse_mode) to avoid Markdown formatting issues
+    const payload = { chat_id: chatId, text };
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+    console.log(`[TELEGRAM] Calling sendMessage: chat_id=${chatId}, text_length=${text.length}`);
+
     try {
-        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text,
-                parse_mode: 'Markdown',
-            }),
+            body: JSON.stringify(payload),
         });
 
-        if (!res.ok) {
-            // Retry without Markdown if Markdown parsing fails (Telegram error 400)
-            const errData = await res.json().catch(() => null);
-            if (errData?.error_code === 400) {
-                console.log('[TELEGRAM] Markdown parse failed, retrying without parse_mode');
-                await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text }),
-                });
-            } else {
-                console.error('[TELEGRAM] sendMessage failed:', errData);
-            }
+        const data = await res.json();
+        console.log(`[TELEGRAM] sendMessage response: ok=${data.ok}, description=${data.description || 'none'}`);
+
+        if (!data.ok) {
+            console.error(`[TELEGRAM] sendMessage FAILED:`, JSON.stringify(data));
+            return false;
         }
+
+        console.log(`[TELEGRAM] Message sent successfully to chat ${chatId}`);
+        return true;
     } catch (error) {
-        console.error('[TELEGRAM] sendMessage error:', error);
+        console.error(`[TELEGRAM] sendMessage network error:`, error);
+        return false;
     }
 }
 
