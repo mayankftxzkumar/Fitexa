@@ -1,21 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabaseAdmin';
 import { NextResponse } from 'next/server';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; // API routes can use anon or service_role
 const perplexityKey = process.env.PERPLEXITY_API_KEY!;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 
 export async function GET(request: Request) {
-    // Basic auth to prevent random invocations if needed, Vercel cron uses a bearer token
+    // CRON_SECRET is REQUIRED — block if not configured
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabase = createAdminClient();
 
         // Fetch active projects that have Google Location ID configured
         const { data: projects, error } = await supabase

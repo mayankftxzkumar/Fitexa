@@ -182,7 +182,7 @@ export default function DashboardClient({ user }: { user: any }) {
                                                 {project.status === 'active' ? '● Active' : project.status}
                                             </span>
                                         </div>
-                                        <p className={`text-[11px] mb-5 ${muted}`}>Updated {formatDate(project.updated_at)}</p>
+                                        <p className={`text-[11px] mb-5 ${muted}`}>Updated {formatDate(project.updated_at || project.created_at)}</p>
                                         <button
                                             onClick={() => handleProjectClick(project)}
                                             className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all border ${isDarkMode

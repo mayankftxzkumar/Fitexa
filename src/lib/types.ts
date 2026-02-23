@@ -6,13 +6,13 @@ export interface AIProject {
     business_location: string;
     business_category: string;
     business_description: string;
-    telegram_token: string;
+    telegram_token?: string;  // Server-only — never sent to client
     enabled_features: string[];
     status: 'draft' | 'active';
     webhook_url: string;
-    current_step: number;
+    current_step?: number;
     created_at: string;
-    updated_at: string;
+    updated_at?: string;
     google_access_token?: string;
     google_refresh_token?: string;
     google_location_id?: string;

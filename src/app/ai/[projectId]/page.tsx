@@ -15,10 +15,10 @@ export default async function AIManagementPage({ params }: PageProps) {
         redirect('/');
     }
 
-    // Fetch the project
+    // Fetch the project — only safe columns (no tokens sent to client)
     const { data: project } = await supabase
         .from('ai_projects')
-        .select('*')
+        .select('id, user_id, ai_name, business_name, business_location, business_category, business_description, enabled_features, status, webhook_url, telegram_bot_username, google_connected, google_location_id, created_at')
         .eq('id', projectId)
         .eq('user_id', user.id)
         .single();
