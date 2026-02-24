@@ -2,6 +2,7 @@ import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
+import HowItWorks from "@/components/HowItWorks";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -18,6 +19,7 @@ export default async function Home() {
       <Navigation />
       <main className="flex-1 w-full bg-fitexa-beige overflow-hidden">
         <Hero />
+        <HowItWorks />
         <Features />
       </main>
       <Footer />
