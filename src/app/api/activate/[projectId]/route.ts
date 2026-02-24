@@ -174,7 +174,9 @@ export async function POST(
         console.log('[ACTIVATE] Step 4 PASSED — Webhook registered successfully');
 
         console.log('[ACTIVATE] Step 5 — Updating database...');
-        const { error: updateErr } = await admin
+        // Try full update first, fall back to minimal if columns don't exist
+        let updateErr;
+        const fullUpdate = await admin
             .from('ai_projects')
             .update({
                 status: 'active',
@@ -183,9 +185,19 @@ export async function POST(
             })
             .eq('id', projectId);
 
+        if (fullUpdate.error) {
+            console.warn('[ACTIVATE] Full update failed, trying minimal update:', fullUpdate.error.message);
+            // Fallback: maybe webhook_url column doesn't exist
+            const minUpdate = await admin
+                .from('ai_projects')
+                .update({ status: 'active' })
+                .eq('id', projectId);
+            updateErr = minUpdate.error;
+        }
+
         if (updateErr) {
             console.error('[ACTIVATE] FAILED — DB update error:', updateErr.message);
-            return NextResponse.json({ error: 'Failed to save activation status. Please try again.' }, { status: 500 });
+            return NextResponse.json({ error: `Failed to save activation status: ${updateErr.message}` }, { status: 500 });
         }
         console.log(`[ACTIVATE] Step 5 PASSED — Project ${projectId} status set to "active"`);
         console.log(`[ACTIVATE] ====== Activation complete for @${botUsername} ======`);
