@@ -55,6 +55,51 @@ export interface AIFeature {
     comingSoon?: boolean;
 }
 
+// ─── Enterprise Orchestration Core Types ───────────────────
+
+export interface AgentInput {
+    projectId: string;
+    channel: 'telegram' | 'whatsapp' | 'instagram' | 'api';
+    message: string;
+    chatId: number;
+}
+
+export interface IntentResult {
+    type: 'chat' | 'action';
+    action: string | null;
+    payload: Record<string, unknown>;
+    message: string | null;
+}
+
+export interface ActionResult {
+    success: boolean;
+    message: string;
+    data?: Record<string, unknown>;
+    error?: string;
+}
+
+export interface ActionRegistryEntry {
+    handler: (payload: Record<string, unknown>, context: ActionContext) => Promise<ActionResult>;
+    requiredFeature: string;
+    description: string;
+}
+
+export interface ActionContext {
+    project: AIProject;
+    chatId: number;
+    channel: string;
+}
+
+export interface ActivityLogEntry {
+    id?: string;
+    project_id: string;
+    action_type: string;
+    status: 'success' | 'failed';
+    input_payload: Record<string, unknown>;
+    result: Record<string, unknown>;
+    created_at?: string;
+}
+
 export const PREBUILT_FEATURES: AIFeature[] = [
     {
         id: 'auto_lead_reply',

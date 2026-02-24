@@ -1,9 +1,12 @@
+/**
+ * Cron Job: Google Review Auto-Reply
+ * Iterates active projects with Google credentials and replies to unreplied reviews.
+ * Now delegates to googleService instead of containing raw API logic.
+ */
+
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import { NextResponse } from 'next/server';
-
-const perplexityKey = process.env.PERPLEXITY_API_KEY!;
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+import * as googleService from '@/services/googleService';
 
 export async function GET(request: Request) {
     // CRON_SECRET is REQUIRED — block if not configured
@@ -32,97 +35,25 @@ export async function GET(request: Request) {
 
         for (const project of projects) {
             try {
-                // 1. Refresh Google Access Token
-                const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        client_id: GOOGLE_CLIENT_ID,
-                        client_secret: GOOGLE_CLIENT_SECRET,
-                        refresh_token: project.google_refresh_token,
-                        grant_type: 'refresh_token',
-                    }),
+                // Delegate to googleService unified handler
+                const result = await googleService.replyToLatestReviews(
+                    {},
+                    { project },
+                );
+
+                results.push({
+                    projectId: project.id,
+                    success: result.success,
+                    message: result.message,
+                    data: result.data,
                 });
-
-                const tokenData = await tokenRes.json();
-                if (tokenData.error) {
-                    console.error(`Failed to refresh token for project ${project.id}:`, tokenData.error);
-                    continue;
-                }
-                const newAccessToken = tokenData.access_token;
-
-                // Update access token in DB (optional but good practice)
-                await supabase.from('ai_projects').update({ google_access_token: newAccessToken }).eq('id', project.id);
-
-                // 2. Fetch Unreplied Reviews
-                // Location ID format: 'locations/12345' or 'accounts/XYZ/locations/12345' depending on API version
-                // The v1 API usually uses accounts/{accountId}/locations/{locationId}
-                const reviewsUrl = `https://mybusiness.googleapis.com/v4/${project.google_location_id}/reviews`;
-                const reviewsRes = await fetch(reviewsUrl, {
-                    headers: { 'Authorization': `Bearer ${newAccessToken}` }
-                });
-
-                if (!reviewsRes.ok) {
-                    console.error(`Failed to fetch reviews for ${project.id}:`, await reviewsRes.text());
-                    continue;
-                }
-
-                const reviewsData = await reviewsRes.json();
-                const reviews = reviewsData.reviews || [];
-
-                let repliedCount = 0;
-
-                // 3. Process Reviews
-                for (const review of reviews) {
-                    // Skip if already replied
-                    if (review.reviewReply) continue;
-
-                    // Generate AI Reply using Perplexity
-                    const systemPrompt = `You are the owner of "${project.business_name}", a ${project.business_category} in ${project.business_location}. Provide a polite, professional, and SEO-friendly response to the following customer review. Keep it under 3 sentences. Mention the business name organically if positive. If negative, apologize professionally and offer an offline contact path.`;
-
-                    const aiRes = await fetch('https://api.perplexity.ai/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${perplexityKey}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            model: 'sonar',
-                            messages: [
-                                { role: 'system', content: systemPrompt },
-                                { role: 'user', content: `Rating: ${review.starRating}\nReview Text: ${review.comment}` }
-                            ],
-                            max_tokens: 150,
-                        }),
-                    });
-
-                    if (!aiRes.ok) continue;
-
-                    const aiData = await aiRes.json();
-                    const aiReplyText = aiData?.choices?.[0]?.message?.content;
-
-                    if (!aiReplyText) continue;
-
-                    // 4. Post Reply to Google
-                    const replyUrl = `https://mybusiness.googleapis.com/v4/${project.google_location_id}/reviews/${review.reviewId}/reply`;
-                    const postReplyRes = await fetch(replyUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${newAccessToken}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ comment: aiReplyText })
-                    });
-
-                    if (postReplyRes.ok) {
-                        repliedCount++;
-                    }
-                }
-
-                results.push({ projectId: project.id, repliedCount });
-
             } catch (pError) {
                 console.error(`Error processing project ${project.id}:`, pError);
+                results.push({
+                    projectId: project.id,
+                    success: false,
+                    message: String(pError),
+                });
             }
         }
 
