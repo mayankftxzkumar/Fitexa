@@ -15,13 +15,20 @@ export default async function AIManagementPage({ params }: PageProps) {
         redirect('/');
     }
 
-    // Fetch the project — only safe columns (no tokens sent to client)
-    const { data: project } = await supabase
+    // Fetch the project — select all, then strip sensitive fields before sending to client
+    const { data: rawProject } = await supabase
         .from('ai_projects')
-        .select('id, user_id, ai_name, business_name, business_location, business_category, business_description, enabled_features, status, webhook_url, telegram_bot_username, google_connected, google_location_id, created_at')
+        .select('*')
         .eq('id', projectId)
         .eq('user_id', user.id)
         .single();
+
+    // Strip sensitive server-only fields before passing to client
+    const project = rawProject ? (() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { telegram_token, google_access_token, google_refresh_token, ...safe } = rawProject;
+        return safe;
+    })() : null;
 
     if (!project) {
         redirect('/dashboard');
