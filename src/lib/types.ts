@@ -16,6 +16,7 @@ export interface AIProject {
     google_access_token?: string;
     google_refresh_token?: string;
     google_location_id?: string;
+    google_connected?: boolean;
     telegram_bot_username?: string;
 }
 

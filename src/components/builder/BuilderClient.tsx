@@ -22,7 +22,7 @@ export default function BuilderClient({ user, project: initialProject }: { user:
     const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 
     // Google connection state
-    const [googleConnected, setGoogleConnected] = useState(!!initialProject.google_access_token);
+    const [googleConnected, setGoogleConnected] = useState(!!initialProject.google_connected);
 
     // Step 1: Business Info (auto-filled from Google or manual)
     const [aiName, setAiName] = useState(initialProject.ai_name || 'Untitled AI');

@@ -14,6 +14,7 @@ export default function DashboardClient({ user }: { user: any }) {
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
+    const [errorToast, setErrorToast] = useState<string | null>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -42,26 +43,63 @@ export default function DashboardClient({ user }: { user: any }) {
             .from('ai_projects')
             .select('*')
             .eq('user_id', user.id)
-            .order('updated_at', { ascending: false });
+            .order('created_at', { ascending: false });
         if (data) setProjects(data);
         setLoading(false);
     };
 
+    const showError = (msg: string) => {
+        setErrorToast(msg);
+        setTimeout(() => setErrorToast(null), 5000);
+    };
+
     const handleCreateProject = async () => {
         setCreating(true);
-        const { data, error } = await supabase
-            .from('ai_projects')
-            .insert({ user_id: user.id, ai_name: 'Untitled AI' })
-            .select()
-            .single();
-        setCreating(false);
-        if (error) {
-            console.error('Error creating project:', error);
-            alert(`Oops! Project creation failed: ${error.message}\n\nPlease make sure you have run the custom SQL migration in your Supabase dashboard to create the ai_projects table.`);
-            return;
-        }
-        if (data && !error) {
-            router.push(`/builder/${data.id}`);
+        setErrorToast(null);
+        try {
+            const { data, error } = await supabase
+                .from('ai_projects')
+                .insert({
+                    user_id: user.id,
+                    ai_name: 'Untitled AI',
+                    status: 'draft',
+                    current_step: 1,
+                })
+                .select('id')
+                .single();
+
+            if (error) {
+                console.error('Error creating project:', error);
+                showError(`Project creation failed: ${error.message}`);
+                setCreating(false);
+                return;
+            }
+
+            if (data?.id) {
+                router.push(`/builder/${data.id}`);
+                return;
+            }
+
+            // Fallback: insert succeeded but select returned null — fetch latest draft
+            const { data: fallback } = await supabase
+                .from('ai_projects')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('status', 'draft')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (fallback?.id) {
+                router.push(`/builder/${fallback.id}`);
+            } else {
+                showError('Project was created but could not be loaded. Please refresh.');
+            }
+        } catch (err) {
+            console.error('Unexpected error creating project:', err);
+            showError('Something went wrong. Please try again.');
+        } finally {
+            setCreating(false);
         }
     };
 
@@ -198,6 +236,17 @@ export default function DashboardClient({ user }: { user: any }) {
                     </section>
                 </main>
             </div>
+
+            {/* Error Toast */}
+            {errorToast && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-dd">
+                    <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                        <span className="text-base">⚠️</span>
+                        <p className="text-sm font-medium">{errorToast}</p>
+                        <button onClick={() => setErrorToast(null)} className="ml-2 opacity-60 hover:opacity-100 transition-opacity text-xs font-bold">✕</button>
+                    </div>
+                </div>
+            )}
 
             <style jsx>{`
                 @keyframes blob {
