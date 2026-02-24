@@ -36,8 +36,47 @@ export async function POST(
         }
         console.log(`[ACTIVATE] Step 1 PASSED — User: ${user.id}`);
 
-        // ── Step 2: Fetch project & validate required fields ──
-        const { data: project, error: fetchErr } = await supabase
+        // ── Step 1b: Parse request body for token and project data ──
+        let bodyData: Record<string, unknown> = {};
+        try {
+            bodyData = await request.json();
+        } catch {
+            // No body sent — fall back to DB-only mode
+        }
+
+        const admin = createAdminClient();
+
+        // ── Step 2: Save token & project data via admin client (bypasses RLS) ──
+        if (bodyData.telegram_token) {
+            console.log(`[ACTIVATE] Step 2a — Saving telegram_token via admin client (length: ${(bodyData.telegram_token as string).length})`);
+            const updatePayload: Record<string, unknown> = {
+                telegram_token: bodyData.telegram_token,
+            };
+            // Also save any other fields sent from the builder
+            if (bodyData.telegram_bot_username) updatePayload.telegram_bot_username = bodyData.telegram_bot_username;
+            if (bodyData.ai_name) updatePayload.ai_name = bodyData.ai_name;
+            if (bodyData.business_name) updatePayload.business_name = bodyData.business_name;
+            if (bodyData.business_location) updatePayload.business_location = bodyData.business_location;
+            if (bodyData.business_category) updatePayload.business_category = bodyData.business_category;
+            if (bodyData.business_description) updatePayload.business_description = bodyData.business_description;
+            if (bodyData.enabled_features) updatePayload.enabled_features = bodyData.enabled_features;
+            updatePayload.current_step = 3;
+
+            const { error: saveErr } = await admin
+                .from('ai_projects')
+                .update(updatePayload)
+                .eq('id', projectId)
+                .eq('user_id', user.id);
+
+            if (saveErr) {
+                console.error('[ACTIVATE] FAILED — Admin save error:', saveErr.message);
+                return NextResponse.json({ error: `Failed to save project data: ${saveErr.message}` }, { status: 500 });
+            }
+            console.log('[ACTIVATE] Step 2a PASSED — Data saved via admin client');
+        }
+
+        // ── Step 2b: Fetch project fresh from DB (using admin to ensure we see everything) ──
+        const { data: project, error: fetchErr } = await admin
             .from('ai_projects')
             .select('*')
             .eq('id', projectId)
@@ -49,7 +88,7 @@ export async function POST(
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
 
-        console.log(`[ACTIVATE] Step 2 — Project fetched:`, {
+        console.log(`[ACTIVATE] Step 2b — Project fetched:`, {
             id: project.id,
             ai_name: project.ai_name,
             status: project.status,
@@ -60,7 +99,7 @@ export async function POST(
         });
 
         if (!project.telegram_token) {
-            console.error('[ACTIVATE] FAILED — Missing telegram_token');
+            console.error('[ACTIVATE] FAILED — Missing telegram_token even after save');
             return NextResponse.json({ error: 'Telegram bot token is required. Please add it in Step 3.' }, { status: 400 });
         }
         if (!project.business_name) {
@@ -134,9 +173,7 @@ export async function POST(
         }
         console.log('[ACTIVATE] Step 4 PASSED — Webhook registered successfully');
 
-        // ── Step 5: Update DB only after successful webhook ──
         console.log('[ACTIVATE] Step 5 — Updating database...');
-        const admin = createAdminClient();
         const { error: updateErr } = await admin
             .from('ai_projects')
             .update({

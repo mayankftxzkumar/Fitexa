@@ -186,44 +186,22 @@ export default function BuilderClient({ user, project: initialProject }: { user:
 
         setActivating(true);
 
-        // Explicitly save all current data including token to DB
-        const { error: saveErr } = await supabase.from('ai_projects').update({
-            ai_name: aiName,
-            business_name: bizName,
-            business_location: bizLocation,
-            business_category: bizCategory,
-            business_description: bizDescription,
-            telegram_token: telegramToken,
-            telegram_bot_username: botUsername,
-            enabled_features: features.filter(f => f.enabled).map(f => f.id),
-            current_step: 3,
-        }).eq('id', initialProject.id);
-
-        if (saveErr) {
-            console.error('[BuilderClient] Failed to save before activation:', saveErr);
-            alert(`Failed to save project data: ${saveErr.message}`);
-            setActivating(false);
-            return;
-        }
-
-        // Verify token was actually persisted by re-reading from DB
-        const { data: freshProject } = await supabase
-            .from('ai_projects')
-            .select('telegram_token')
-            .eq('id', initialProject.id)
-            .single();
-
-        console.log('[BuilderClient] Pre-activation DB check — telegram_token exists:', !!freshProject?.telegram_token);
-
-        if (!freshProject?.telegram_token) {
-            alert('Token failed to save to database. Please try again or check your permissions.');
-            setActivating(false);
-            return;
-        }
-
-        // Call activation API
+        // Send all data to the activation API — server saves via admin client
         try {
-            const res = await fetch(`/api/activate/${initialProject.id}`, { method: 'POST' });
+            const res = await fetch(`/api/activate/${initialProject.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telegram_token: telegramToken,
+                    telegram_bot_username: botUsername,
+                    ai_name: aiName,
+                    business_name: bizName,
+                    business_location: bizLocation,
+                    business_category: bizCategory,
+                    business_description: bizDescription,
+                    enabled_features: features.filter(f => f.enabled).map(f => f.id),
+                }),
+            });
             const data = await res.json();
             if (!res.ok) {
                 alert(`Activation failed: ${data.error || 'Unknown error'}${data.details ? '\n' + data.details : ''}`);
