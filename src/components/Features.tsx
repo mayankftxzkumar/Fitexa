@@ -27,7 +27,7 @@ const features = [
     },
     {
         title: 'Seamless Integrations',
-        description: 'Connect instantly with Telegram, WhatsApp, and Google Business Profile.',
+        description: 'Connect instantly with Telegram and Google Business Profile.',
         icon: (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 13A5 5 0 0 0 17 13L20 10A5 5 0 0 0 13 3L11.5 4.5" stroke="#0D4F31" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

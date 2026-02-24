@@ -48,7 +48,7 @@ export default function HowItWorks() {
                         >
                             The easiest way to put your <br />
                             <span className="relative inline-block mt-2">
-                                <span className="relative z-10 text-white bg-clip-text text-transparent bg-gradient-to-r from-[#0D4F31] to-emerald-600">business on autopilot</span>
+                                <span className="relative z-10 text-[#0D4F31]">business on autopilot</span>
                                 <span className="absolute bottom-1 left-0 w-full h-3 bg-emerald-200/40 -z-10 rounded-full"></span>
                             </span>
                         </motion.h2>
@@ -84,7 +84,7 @@ export default function HowItWorks() {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 md:left-auto md:-right-12 md:top-[-40px] text-[180px] font-black text-black/[0.03] -z-10 pointer-events-none select-none tracking-tighter">01</div>
                             <h4 className="text-3xl font-extrabold mb-4 tracking-tight">Connect Channels</h4>
                             <p className="text-lg text-black/60 leading-relaxed max-w-sm md:ml-auto">
-                                Securely link Google Business Profile, WhatsApp, and Telegram. Fitexa natively integrates into the platforms your customers already use.
+                                Securely link Google Business Profile and Telegram. Fitexa natively integrates into the platforms your customers already use.
                             </p>
                         </motion.div>
 
@@ -108,31 +108,38 @@ export default function HowItWorks() {
                             className="flex-1 w-full md:pl-24"
                         >
                             <div className="bg-white/60 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_20px_40px_rgba(0,0,0,0.04)] border border-white/80 relative overflow-hidden group hover:shadow-[0_30px_60px_rgba(13,79,49,0.08)] transition-all duration-500">
-                                {/* Abstract Connect Animation */}
+                                {/* Premium Orbit Node Animation */}
                                 <div className="h-48 relative flex items-center justify-center">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="w-32 h-32 border border-dashed border-emerald-200 rounded-full" />
+
+                                    {/* Central Fitexa Hub Node */}
+                                    <motion.div
+                                        animate={{ scale: [1, 1.05, 1], boxShadow: ["0 0 0 rgba(13,79,49,0)", "0 0 40px rgba(13,79,49,0.2)", "0 0 0 rgba(13,79,49,0)"] }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                        className="w-20 h-20 bg-gradient-to-br from-[#0D4F31] to-[#083520] rounded-[24px] shadow-xl flex items-center justify-center z-20 relative ring-1 ring-white/20"
+                                    >
+                                        <span className="text-white font-bold text-3xl font-serif italic">F</span>
+                                    </motion.div>
+
+                                    {/* Rotating Platform Rings */}
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        {/* Inner Ring (Google) */}
+                                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} className="absolute w-[180px] h-[180px] rounded-full border border-emerald-200/50">
+                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center">
+                                                <div className="w-3 h-3 bg-[#EA4335] rounded-full" /> {/* Google Business Hint */}
+                                            </div>
+                                        </motion.div>
+
+                                        {/* Outer Ring (Telegram) */}
+                                        <motion.div animate={{ rotate: -360 }} transition={{ duration: 35, repeat: Infinity, ease: "linear" }} className="absolute w-[260px] h-[260px] rounded-full border border-dashed border-emerald-100/60">
+                                            <div className="absolute top-1/2 -right-4 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center">
+                                                <div className="w-4 h-4 bg-[#2AABEE] rounded-full" /> {/* Telegram Hint */}
+                                            </div>
+                                        </motion.div>
                                     </div>
-                                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 3, repeat: Infinity }} className="w-16 h-16 bg-gradient-to-br from-[#0D4F31] to-emerald-700 rounded-2xl shadow-lg flex items-center justify-center z-10 rotate-12">
-                                        <span className="text-white font-bold text-xl font-serif italic">F</span>
-                                    </motion.div>
 
-                                    {/* Floating connection nodes */}
-                                    <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, delay: 0 }} className="absolute top-4 left-6 w-12 h-12 bg-white rounded-full shadow-md border border-gray-100 flex items-center justify-center">
-                                        <div className="w-5 h-5 bg-blue-500 rounded-full" /> {/* Meta/WhatsApp vaguely */}
-                                    </motion.div>
-                                    <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 4, repeat: Infinity, delay: 1 }} className="absolute bottom-4 right-6 w-12 h-12 bg-white rounded-full shadow-md border border-gray-100 flex items-center justify-center">
-                                        <div className="w-5 h-5 bg-sky-400 rounded-full" /> {/* Telegram vaguely */}
-                                    </motion.div>
-                                    <motion.div animate={{ x: [0, 10, 0] }} transition={{ duration: 4, repeat: Infinity, delay: 2 }} className="absolute top-1/2 -right-2 w-10 h-10 bg-white rounded-full shadow-md border border-gray-100 flex items-center justify-center">
-                                        <div className="w-5 h-5 bg-red-400 rounded-full" /> {/* Google vaguely */}
-                                    </motion.div>
-
-                                    {/* Connection lines (Animated SVG) */}
-                                    <svg className="absolute inset-0 w-full h-full z-0" style={{ pointerEvents: 'none' }}>
-                                        <motion.path d="M 60 40 L 120 90" stroke="#10b981" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 1.5, repeat: Infinity }} />
-                                        <motion.path d="M 220 160 L 160 110" stroke="#10b981" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.5, repeat: Infinity }} />
-                                    </svg>
+                                    {/* Dynamic Connection Pulses */}
+                                    <motion.div animate={{ opacity: [0, 0.4, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#0D4F31] to-transparent pointer-events-none" />
+                                    <motion.div animate={{ opacity: [0, 0.4, 0] }} transition={{ duration: 3, repeat: Infinity, delay: 1.5, ease: "easeInOut" }} className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-gradient-to-b from-transparent via-[#0D4F31] to-transparent pointer-events-none" />
                                 </div>
                             </div>
                         </motion.div>
