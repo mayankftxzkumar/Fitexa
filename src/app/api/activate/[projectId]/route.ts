@@ -49,6 +49,16 @@ export async function POST(
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
 
+        console.log(`[ACTIVATE] Step 2 — Project fetched:`, {
+            id: project.id,
+            ai_name: project.ai_name,
+            status: project.status,
+            telegram_token_exists: !!project.telegram_token,
+            telegram_token_length: project.telegram_token?.length || 0,
+            business_name: project.business_name,
+            user_id: project.user_id,
+        });
+
         if (!project.telegram_token) {
             console.error('[ACTIVATE] FAILED — Missing telegram_token');
             return NextResponse.json({ error: 'Telegram bot token is required. Please add it in Step 3.' }, { status: 400 });

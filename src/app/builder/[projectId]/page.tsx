@@ -24,10 +24,11 @@ export default async function BuilderPage({ params }: PageProps) {
         .eq('user_id', user.id)
         .single();
 
-    // Strip sensitive server-only fields before passing to client
+    // Strip only OAuth tokens (server secrets) before passing to client
+    // telegram_token is user-entered and needs to be editable in the builder
     const project = rawProject ? (() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { telegram_token, google_access_token, google_refresh_token, ...safe } = rawProject;
+        const { google_access_token, google_refresh_token, ...safe } = rawProject;
         return safe;
     })() : null;
 

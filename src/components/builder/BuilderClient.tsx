@@ -20,6 +20,7 @@ export default function BuilderClient({ user, project: initialProject }: { user:
     const [activating, setActivating] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
     const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+    const hasMounted = useRef(false);
 
     // Google connection state
     const [googleConnected, setGoogleConnected] = useState(!!initialProject.google_connected);
@@ -102,6 +103,11 @@ export default function BuilderClient({ user, project: initialProject }: { user:
     }, [autoSave]);
 
     useEffect(() => {
+        // Skip autoSave on initial mount to prevent overwriting DB values with empty state
+        if (!hasMounted.current) {
+            hasMounted.current = true;
+            return;
+        }
         debouncedSave();
         return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
     }, [aiName, bizName, bizLocation, bizCategory, bizDescription, telegramToken, features, debouncedSave]);
@@ -124,6 +130,17 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                 setBotUsername(data.bot_username);
                 setTokenError('');
                 setValidatingToken(false);
+
+                // Immediately persist token to DB on successful validation
+                await supabase
+                    .from('ai_projects')
+                    .update({
+                        telegram_token: telegramToken,
+                        telegram_bot_username: data.bot_username,
+                    })
+                    .eq('id', initialProject.id);
+                console.log('[BuilderClient] Token saved to DB after validation');
+
                 return true;
             } else {
                 setTokenError(data.error || 'Invalid bot token.');
@@ -169,8 +186,8 @@ export default function BuilderClient({ user, project: initialProject }: { user:
 
         setActivating(true);
 
-        // Save all current data
-        await supabase.from('ai_projects').update({
+        // Explicitly save all current data including token to DB
+        const { error: saveErr } = await supabase.from('ai_projects').update({
             ai_name: aiName,
             business_name: bizName,
             business_location: bizLocation,
@@ -181,6 +198,28 @@ export default function BuilderClient({ user, project: initialProject }: { user:
             enabled_features: features.filter(f => f.enabled).map(f => f.id),
             current_step: 3,
         }).eq('id', initialProject.id);
+
+        if (saveErr) {
+            console.error('[BuilderClient] Failed to save before activation:', saveErr);
+            alert(`Failed to save project data: ${saveErr.message}`);
+            setActivating(false);
+            return;
+        }
+
+        // Verify token was actually persisted by re-reading from DB
+        const { data: freshProject } = await supabase
+            .from('ai_projects')
+            .select('telegram_token')
+            .eq('id', initialProject.id)
+            .single();
+
+        console.log('[BuilderClient] Pre-activation DB check — telegram_token exists:', !!freshProject?.telegram_token);
+
+        if (!freshProject?.telegram_token) {
+            alert('Token failed to save to database. Please try again or check your permissions.');
+            setActivating(false);
+            return;
+        }
 
         // Call activation API
         try {
