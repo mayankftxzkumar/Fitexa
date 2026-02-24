@@ -190,7 +190,7 @@ export async function POST(
             // Fallback: maybe webhook_url column doesn't exist
             const minUpdate = await admin
                 .from('ai_projects')
-                .update({ status: 'active' })
+                .update({ status: 'active', telegram_bot_username: botUsername })
                 .eq('id', projectId);
             updateErr = minUpdate.error;
         }
