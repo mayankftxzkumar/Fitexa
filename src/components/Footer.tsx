@@ -4,26 +4,26 @@ import React from 'react';
 
 export default function Footer() {
     return (
-        <footer className="bg-fitexa-black text-fitexa-beige py-12 border-t border-fitexa-beige/10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
-                <div className="mb-6 md:mb-0">
-                    <Link href="/" className="flex items-center gap-2.5 text-3xl font-black text-fitexa-green tracking-tighter">
-                        <Image src="/logo.png" alt="Fitexa Logo" width={32} height={32} className="rounded-lg" unoptimized />
+        <footer className="bg-[#050505] text-[#F5F1E8] py-16 border-t border-white/5">
+            <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="text-center md:text-left">
+                    <Link href="/" className="flex items-center justify-center md:justify-start gap-3 text-2xl font-bold tracking-tight text-white mb-2">
+                        <Image src="/logo.png" alt="Fitexa Logo" width={28} height={28} className="rounded-md" unoptimized />
                         Fitexa
                     </Link>
-                    <p className="mt-2 text-sm text-fitexa-beige/60">
+                    <p className="text-sm text-white/50">
                         &copy; {new Date().getFullYear()} Fitexa. All rights reserved.
                     </p>
                 </div>
 
-                <div className="flex space-x-8">
-                    <Link href="#" className="font-medium text-fitexa-beige/70 hover:text-fitexa-green transition-colors">
+                <div className="flex gap-8">
+                    <Link href="#" className="font-medium text-white/60 hover:text-white transition-colors text-sm">
                         Terms
                     </Link>
-                    <Link href="#" className="font-medium text-fitexa-beige/70 hover:text-fitexa-green transition-colors">
+                    <Link href="#" className="font-medium text-white/60 hover:text-white transition-colors text-sm">
                         Privacy
                     </Link>
-                    <Link href="#" className="font-medium text-fitexa-beige/70 hover:text-fitexa-green transition-colors">
+                    <Link href="#" className="font-medium text-white/60 hover:text-white transition-colors text-sm">
                         Contact
                     </Link>
                 </div>

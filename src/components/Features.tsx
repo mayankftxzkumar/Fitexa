@@ -2,64 +2,56 @@ import React from 'react';
 
 const features = [
     {
-        title: 'AI Front Desk',
-        description: 'Instant lead replies, trial booking, automated follow-ups.',
+        title: 'Universal Local Business Support',
+        description: 'Works for restaurants, clinics, salons, dentists, bakeries, real estate, repair shops, and more.',
+        icon: '🏪'
     },
     {
-        title: 'Smart Growth Engine',
-        description: 'Google review automation, SEO content generation, local visibility optimization.',
+        title: 'Drag-and-Drop AI Builder',
+        description: 'Configure your AI agent\'s capabilities in minutes without writing a single line of code.',
+        icon: '⚡'
     },
     {
-        title: 'Member Retention',
-        description: 'Automated renewal reminders and engagement campaigns.',
+        title: 'Seamless Integrations',
+        description: 'Connect instantly with Telegram, WhatsApp, and Google Business Profile.',
+        icon: '🔗'
     },
     {
-        title: 'Telegram Control',
-        description: 'Run your studio AI directly from Telegram — always connected.',
+        title: 'Conversation Analytics',
+        description: 'Track leads, measure engagement, and monitor exactly how your agent is performing.',
+        icon: '📊'
     }
 ];
 
 export default function Features() {
     return (
-        <section id="features" className="py-32 bg-fitexa-beige text-fitexa-black relative overflow-hidden">
-
-            {/* Background elements for depth */}
-            <div className="absolute top-0 right-0 w-[40vw] h-[40vw] bg-fitexa-green/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[30vw] h-[30vw] bg-fitexa-pink/10 rounded-full blur-[100px] pointer-events-none" />
-
+        <section id="features" className="py-24 bg-[#F5F1E8] text-[#050505] relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 relative z-10">
 
-                <div className="text-center max-w-4xl mx-auto mb-20 animate-fade-in-up">
-                    <h2 className="text-5xl md:text-6xl font-[900] text-fitexa-green tracking-tighter font-sans mb-8 leading-[1.1]">
-                        Everything your studio needs to scale.
+                <div className="text-center max-w-3xl mx-auto mb-16 animate-fade-in-up">
+                    <h2 className="text-4xl md:text-5xl font-[800] tracking-tight mb-6 leading-tight">
+                        Everything your business needs to scale.
                     </h2>
-                    <p className="text-xl text-fitexa-black/60 font-medium max-w-2xl mx-auto leading-relaxed">
-                        Powerful AI automation built specifically for fitness businesses, all managed effortlessly.
+                    <p className="text-lg text-black/60 font-medium leading-relaxed">
+                        Powerful AI automation built specifically for local businesses, managed effortlessly.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {features.map((feature, index) => (
                         <div
                             key={index}
-                            className="group relative bg-[#FCFBF8] rounded-3xl p-10 border border-fitexa-black/[0.03] shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] hover:-translate-y-2 transition-all duration-500 overflow-hidden"
+                            className="bg-white rounded-[20px] p-8 border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 flex flex-col"
                         >
-                            {/* Inner subtle noise/grain */}
-                            <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
-
-                            {/* Hover glow */}
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-fitexa-green/5 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-                            <h3 className="text-2xl font-[800] text-fitexa-green mb-5 font-sans tracking-tight group-hover:text-fitexa-black transition-colors duration-500 relative z-10">
+                            <div className="w-12 h-12 rounded-full bg-[#f0f9f4] flex items-center justify-center text-2xl mb-6">
+                                {feature.icon}
+                            </div>
+                            <h3 className="text-xl font-bold mb-3 tracking-tight">
                                 {feature.title}
                             </h3>
-
-                            <p className="text-fitexa-black/70 font-medium leading-relaxed relative z-10 text-[1.05rem]">
+                            <p className="text-black/60 font-medium leading-relaxed text-sm">
                                 {feature.description}
                             </p>
-
-                            {/* Bottom accent line */}
-                            <div className="absolute bottom-0 left-10 right-10 h-[2px] bg-fitexa-green/0 group-hover:bg-fitexa-green/20 transition-all duration-500" />
                         </div>
                     ))}
                 </div>

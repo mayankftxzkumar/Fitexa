@@ -13,7 +13,6 @@ export default function DashboardClient({ user }: { user: any }) {
     const [projects, setProjects] = useState<AIProject[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(true);
     const [errorToast, setErrorToast] = useState<string | null>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -131,26 +130,17 @@ export default function DashboardClient({ user }: { user: any }) {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    const bg = isDarkMode ? 'bg-[#050505] text-[#F5F2EB]' : 'bg-[#F5F2EB] text-[#050505]';
-    const muted = isDarkMode ? 'text-white/40' : 'text-black/40';
-    const cardBg = isDarkMode
-        ? 'bg-white/[0.03] border-white/[0.06] hover:border-white/[0.12]'
-        : 'bg-white/60 border-black/[0.04] hover:border-black/[0.1]';
-
     if (loading) return (
-        <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-[#050505]' : 'bg-[#F5F2EB]'}`}>
-            <div className={`animate-spin rounded-full h-10 w-10 border-2 border-t-transparent ${isDarkMode ? 'border-white/20' : 'border-black/20'}`} />
+        <div className="min-h-screen flex items-center justify-center bg-[#F5F1E8]">
+            {/* Spinning branded asterisk instead of standard tailwind spinner */}
+            <div className="w-12 h-12 flex items-center justify-center animate-spin-slow">
+                <span className="text-4xl text-[#0D4F31]">✦</span>
+            </div>
         </div>
     );
 
     return (
-        <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${bg} font-sans`}>
-            {/* Animated Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className={`absolute top-[-20%] left-[-15%] w-[70vw] h-[70vh] rounded-full blur-[140px] animate-blob ${isDarkMode ? 'bg-[#0D4F31]/25' : 'bg-[#0D4F31]/8'}`} />
-                <div className={`absolute bottom-[-25%] right-[-10%] w-[60vw] h-[60vh] rounded-full blur-[120px] animate-blob animation-delay-2000 ${isDarkMode ? 'bg-[#0D4F31]/15' : 'bg-[#FCDDEC]/25'}`} />
-                <div className={`absolute top-[30%] right-[20%] w-[40vw] h-[40vh] rounded-full blur-[100px] animate-blob animation-delay-4000 ${isDarkMode ? 'bg-[#FCDDEC]/[0.03]' : 'bg-[#0D4F31]/5'}`} />
-            </div>
+        <div className="min-h-screen relative overflow-hidden bg-[#F5F1E8] text-[#050505]">
 
             <div className="relative z-10 min-h-screen flex flex-col">
                 {/* Top Nav — Logo icon only + avatar */}
@@ -162,31 +152,25 @@ export default function DashboardClient({ user }: { user: any }) {
                         <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="focus:outline-none group">
                             {avatarUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={avatarUrl} alt="" className={`w-9 h-9 rounded-full object-cover border-2 transition-all ${isDarkMode ? 'border-white/10 group-hover:border-white/25' : 'border-black/5 group-hover:border-black/15'}`} />
+                                <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border-2 transition-all border-black/5 group-hover:border-black/15 shadow-sm" />
                             ) : (
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ${isDarkMode ? 'bg-white/10 text-white' : 'bg-black/5 text-black'}`}>
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-black/5 text-black border border-black/10">
                                     {fullName.charAt(0)}
                                 </div>
                             )}
                         </button>
                         {isDropdownOpen && (
-                            <div className={`absolute right-0 mt-2 w-60 rounded-2xl overflow-hidden border shadow-2xl z-50 animate-dd ${isDarkMode ? 'bg-[#111] border-white/10' : 'bg-white border-black/5'}`}>
-                                <div className={`px-4 py-3 border-b ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
+                            <div className="absolute right-0 mt-2 w-56 rounded-xl overflow-hidden shadow-lg z-50 animate-dd bg-white border border-black/5">
+                                <div className="px-4 py-3 border-b border-black/5 bg-black/[0.02]">
                                     <p className="font-bold text-sm truncate">{fullName}</p>
-                                    <p className={`text-[11px] truncate mt-0.5 ${muted}`}>{email}</p>
+                                    <p className="text-xs text-black/50 truncate mt-0.5">{email}</p>
                                 </div>
-                                <div className="py-1.5">
-                                    <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-full text-left px-4 py-2 text-sm font-medium flex justify-between items-center transition-colors ${isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
-                                        <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-                                        <div className={`w-9 h-5 rounded-full p-0.5 flex items-center transition-colors ${isDarkMode ? 'bg-[#86efac] justify-end' : 'bg-black/15 justify-start'}`}>
-                                            <div className="w-4 h-4 rounded-full bg-white shadow-sm" />
-                                        </div>
-                                    </button>
-                                    <button className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors ${isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>Settings</button>
+                                <div className="py-2">
+                                    <button className="w-full text-left px-4 py-2 text-sm font-medium transition-colors hover:bg-black/5">Settings</button>
                                 </div>
-                                <div className={`border-t ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
+                                <div className="border-t border-black/5">
                                     <form action="/auth/sign-out" method="post">
-                                        <button className={`w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 transition-colors ${isDarkMode ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}>Logout</button>
+                                        <button className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 transition-colors hover:bg-red-50">Logout</button>
                                     </form>
                                 </div>
                             </div>
@@ -195,64 +179,67 @@ export default function DashboardClient({ user }: { user: any }) {
                 </nav>
 
                 {/* Main Content */}
-                <main className="flex-grow px-6 md:px-10 lg:px-16 xl:px-24 pt-8 pb-20 max-w-screen-xl mx-auto w-full">
-                    {/* Hero */}
-                    <div className="mb-14">
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-[900] tracking-tight leading-[1.05] mb-5">Control Center</h1>
-                        <p className={`text-base md:text-lg font-medium max-w-lg ${muted}`}>Build, configure, and deploy AI agents for your fitness business.</p>
+                <main className="flex-grow px-6 md:px-10 pt-12 pb-24 max-w-5xl mx-auto w-full flex flex-col items-center">
+                    {/* Header */}
+                    <div className="text-center mb-16 max-w-2xl">
+                        <h1 className="text-4xl md:text-5xl font-[800] tracking-tight leading-tight mb-4">Control Center</h1>
+                        <p className="text-lg text-black/60 font-medium">Manage your AI agents for your business.</p>
                         <button
                             onClick={handleCreateProject}
                             disabled={creating}
-                            className={`mt-8 inline-flex items-center gap-2.5 px-7 py-3.5 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 ${isDarkMode ? 'bg-white text-black hover:bg-gray-100 shadow-[0_0_30px_rgba(255,255,255,0.08)]' : 'bg-[#050505] text-white hover:bg-gray-800 shadow-[0_0_30px_rgba(0,0,0,0.15)]'}`}
+                            className="mt-8 inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm text-white bg-[#0D4F31] hover:bg-[#0a3d26] transition-all disabled:opacity-50 shadow-[0_8px_20px_rgba(13,79,49,0.2)] hover:shadow-[0_12px_24px_rgba(13,79,49,0.3)] hover:-translate-y-0.5"
                         >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                            <span className="text-lg">＋</span>
                             {creating ? 'Creating...' : 'Make Your Own AI'}
                         </button>
                     </div>
 
-                    {/* Projects */}
-                    <section>
-                        <h2 className={`text-xs font-[800] uppercase tracking-widest mb-6 ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>Your AI Projects</h2>
+                    {/* Projects Group */}
+                    <section className="w-full">
+                        <div className="flex items-center justify-between mb-8 w-full border-b border-black/10 pb-4">
+                            <h2 className="text-sm font-bold uppercase tracking-widest text-black/60">Your AI Projects</h2>
+                            <span className="text-xs font-bold bg-black/5 px-3 py-1 rounded-full text-black/60">{projects.length} Total</span>
+                        </div>
 
                         {projects.length === 0 ? (
-                            <div className={`rounded-2xl border-2 border-dashed py-20 flex flex-col items-center justify-center text-center ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
-                                <div className={`text-4xl mb-4`}>🤖</div>
-                                <p className={`font-bold mb-1`}>No projects yet</p>
-                                <p className={`text-sm ${muted}`}>Click &quot;Make Your Own AI&quot; to get started.</p>
+                            <div className="bg-white rounded-[24px] border border-black/5 py-24 flex flex-col items-center justify-center text-center shadow-sm w-full">
+                                <div className="text-5xl mb-4 opacity-80">🤖</div>
+                                <p className="font-bold text-lg mb-2">No projects yet</p>
+                                <p className="text-sm text-black/50">Click &quot;Make Your Own AI&quot; to get started.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
                                 {projects.map(project => (
-                                    <div key={project.id} className={`group rounded-2xl border p-6 transition-all duration-300 backdrop-blur-xl ${cardBg}`}>
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-base truncate">{project.ai_name}</h3>
-                                                <p className={`text-sm truncate mt-0.5 ${muted}`}>{project.business_name || 'No business set'}</p>
+                                    <div key={project.id} className="group card-soft p-6 flex flex-col hover:-translate-y-1 transition-all duration-300 relative border-b-4 border-transparent hover:border-b-[#0D4F31]/20">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <h3 className="font-bold text-lg truncate mb-1">{project.ai_name}</h3>
+                                                <p className="text-sm truncate text-black/50">{project.business_name || 'No business set'}</p>
                                             </div>
-                                            <span className={`ml-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${project.status === 'active'
-                                                ? (isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]')
-                                                : (isDarkMode ? 'bg-white/5 text-white/40' : 'bg-black/5 text-black/40')}`}>
-                                                {project.status === 'active' ? '● Active' : project.status}
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 ${project.status === 'active'
+                                                ? 'bg-[#e6f7ec] text-[#0D4F31]'
+                                                : 'bg-black/5 text-black/60'}`}>
+                                                {project.status === 'active' ? 'Live' : 'Draft'}
                                             </span>
                                         </div>
-                                        <p className={`text-[11px] mb-5 ${muted}`}>Updated {formatDate(project.updated_at || project.created_at)}</p>
-                                        <div className="flex items-center gap-2">
+
+                                        <p className="text-xs text-black/40 mb-6">Updated {formatDate(project.updated_at || project.created_at)}</p>
+
+                                        <div className="mt-auto pt-4 flex items-center gap-3 border-t border-black/5">
                                             <button
                                                 onClick={() => handleProjectClick(project)}
-                                                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${isDarkMode
-                                                    ? 'border-white/10 text-white/70 hover:bg-white/5 hover:text-white'
-                                                    : 'border-[#0D4F31]/15 text-[#0D4F31]/70 hover:bg-[#0D4F31]/5 hover:text-[#0D4F31]'}`}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all border ${project.status === 'active'
+                                                    ? 'border-[#0D4F31]/20 text-[#0D4F31] bg-[#0D4F31]/5 hover:bg-[#0D4F31]/10'
+                                                    : 'border-black/10 text-black/70 bg-white hover:bg-black/5'}`}
                                             >
-                                                {project.status === 'active' ? 'Manage' : 'Continue Setup'}
+                                                {project.status === 'active' ? 'Manage Settings' : 'Continue Setup'}
                                             </button>
                                             <button
                                                 onClick={(e) => handleDeleteProject(e, project.id)}
                                                 title="Delete project"
-                                                className={`p-2.5 rounded-xl border transition-all ${isDarkMode
-                                                    ? 'border-white/10 text-white/30 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400'
-                                                    : 'border-black/10 text-black/30 hover:bg-red-50 hover:border-red-200 hover:text-red-500'}`}
+                                                className="p-2 rounded-lg border border-black/10 text-black/30 bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all"
                                             >
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <polyline points="3 6 5 6 21 6" />
                                                     <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                                                 </svg>
@@ -269,24 +256,15 @@ export default function DashboardClient({ user }: { user: any }) {
             {/* Error Toast */}
             {errorToast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-dd">
-                    <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-red-50 border-red-200 text-red-700'}`}>
-                        <span className="text-base">⚠️</span>
+                    <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border bg-white border-red-200 text-red-700">
+                        <span className="text-base text-red-500">⚠️</span>
                         <p className="text-sm font-medium">{errorToast}</p>
-                        <button onClick={() => setErrorToast(null)} className="ml-2 opacity-60 hover:opacity-100 transition-opacity text-xs font-bold">✕</button>
+                        <button onClick={() => setErrorToast(null)} className="ml-2 opacity-60 hover:opacity-100 transition-opacity text-xs font-bold text-black/50">✕</button>
                     </div>
                 </div>
             )}
 
             <style jsx>{`
-                @keyframes blob {
-                    0% { transform: translate(0, 0) scale(1); }
-                    33% { transform: translate(30px, -50px) scale(1.08); }
-                    66% { transform: translate(-20px, 20px) scale(0.92); }
-                    100% { transform: translate(0, 0) scale(1); }
-                }
-                .animate-blob { animation: blob 22s infinite alternate ease-in-out; }
-                .animation-delay-2000 { animation-delay: 2s; }
-                .animation-delay-4000 { animation-delay: 4s; }
                 @keyframes dd {
                     from { opacity: 0; transform: translateY(8px) scale(0.96); }
                     to { opacity: 1; transform: translateY(0) scale(1); }

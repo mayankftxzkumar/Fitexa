@@ -34,11 +34,11 @@ export default async function BuilderPage({ params }: PageProps) {
 
     if (!project) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-[#F5F2EB] font-sans">
-                <p className="text-6xl mb-4">🚫</p>
-                <h1 className="text-2xl font-bold mb-2">Project not found</h1>
-                <p className="text-white/40 text-sm mb-6">This project doesn&apos;t exist or you don&apos;t have access to it.</p>
-                <Link href="/dashboard" className="px-6 py-3 rounded-xl bg-white text-black text-sm font-bold hover:bg-gray-100 transition-colors">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F1E8] text-[#050505] font-sans">
+                <p className="text-6xl mb-4 opacity-80">🚫</p>
+                <h1 className="text-2xl font-[800] tracking-tight mb-2">Project not found</h1>
+                <p className="text-black/50 text-sm mb-8 font-medium">This project doesn&apos;t exist or you don&apos;t have access to it.</p>
+                <Link href="/dashboard" className="px-6 py-3 rounded-xl bg-[#050505] text-white text-sm font-bold hover:bg-black/80 transition-all shadow-[0_4px_14px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5">
                     Back to Dashboard
                 </Link>
             </div>

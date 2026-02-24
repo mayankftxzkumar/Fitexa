@@ -4,36 +4,23 @@
   --color-fitexa-green-900: #04140D;
   --color-fitexa-green-800: #08281A;
   --color-fitexa-green-700: #0F3D2E;
-  /* Updated to requested range */
   --color-fitexa-green: #0D4F31;
+  --color-fitexa-green-light: #86efac;
+
   --color-fitexa-black: #050505;
-  --color-fitexa-beige: #F5F2EB;
+  --color-fitexa-beige: #F5F1E8;
   --color-fitexa-pink: #FCE7EC;
-  --color-fitexa-pink-darker: #E5BCC6;
 
-  --color-background: var(--color-fitexa-black);
-  --color-foreground: var(--color-fitexa-beige);
+  --color-background: var(--color-fitexa-beige);
+  --color-foreground: var(--color-fitexa-black);
 
-  /* Set default font to Outfit */
-  --font-sans: var(--font-outfit), Arial, sans-serif;
+  /* Set default font to Inter */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   /* Custom Animations */
-  --animate-bg-shift: bg-shift 20s ease-in-out infinite alternate;
-  --animate-fade-in-up: fade-in-up 1s ease-out forwards;
-}
-
-@keyframes bg-shift {
-  0% {
-    transform: scale(1.0) translate(0, 0);
-  }
-
-  50% {
-    transform: scale(1.05) translate(-1%, 2%);
-  }
-
-  100% {
-    transform: scale(1.0) translate(2%, -1%);
-  }
+  --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-spin-slow: spin 1.8s ease-in-out infinite;
+  --animate-pulse-subtle: pulse-subtle 1.8s ease-in-out infinite alternate;
 }
 
 @keyframes fade-in-up {
@@ -48,29 +35,46 @@
   }
 }
 
+@keyframes pulse-subtle {
+  0% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1.05);
+  }
+}
+
 :root {
-  --background: #050505;
-  --foreground: #F5F2EB;
+  --background: #F5F1E8;
+  --foreground: #050505;
 }
 
 @layer base {
   body {
     background-color: var(--background);
     color: var(--foreground);
-    @apply antialiased selection:bg-fitexa-pink selection:text-fitexa-black;
+    @apply antialiased selection:bg-fitexa-green selection:text-white;
   }
 }
 
-.bg-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
-  pointer-events: none;
-  mix-blend-mode: overlay;
+.card-soft {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.glass-panel {
-  background: rgba(245, 242, 235, 0.03);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(245, 242, 235, 0.1);
+.hero-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  height: 80vw;
+  max-width: 800px;
+  max-height: 800px;
+  background: radial-gradient(circle, rgba(134, 239, 172, 0.15) 0%, rgba(245, 241, 232, 0) 70%);
+  pointer-events: none;
+  z-index: -1;
 }

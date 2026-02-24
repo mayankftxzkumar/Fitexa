@@ -18,34 +18,37 @@ export default function Navigation() {
     };
 
     return (
-        <nav className="fixed top-0 w-full z-50 bg-fitexa-beige/60 backdrop-blur-2xl border-b border-fitexa-green/5">
+        <nav className="fixed top-0 w-full z-50 bg-[#F5F1E8]/80 backdrop-blur-xl border-b border-black/5">
             <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-                <div className="flex justify-between items-center h-24">
+                <div className="flex justify-between items-center h-20">
+                    {/* Left: Logo */}
                     <div className="flex-shrink-0">
-                        <Link href="/" className="flex items-center gap-2.5 text-3xl font-[900] text-fitexa-green tracking-tighter">
-                            <Image src="/logo.png" alt="Fitexa Logo" width={36} height={36} className="rounded-lg" unoptimized />
+                        <Link href="/" className="flex items-center gap-3 text-2xl font-[800] text-[#050505] tracking-tight">
+                            <Image src="/logo.png" alt="Fitexa Logo" width={32} height={32} className="rounded-md" unoptimized />
                             Fitexa
                         </Link>
                     </div>
-                    <div className="hidden md:flex space-x-12 items-center">
-                        <Link href="/" className="text-fitexa-black/70 hover:text-fitexa-green transition-all duration-300 font-bold tracking-tight text-sm uppercase">
-                            Home
-                        </Link>
-                        <Link href="#features" className="text-fitexa-black/70 hover:text-fitexa-green transition-all duration-300 font-bold tracking-tight text-sm uppercase">
+
+                    {/* Right: Links & CTA */}
+                    <div className="hidden md:flex space-x-10 items-center">
+                        <Link href="#features" className="text-black/60 hover:text-black transition-colors font-medium text-sm">
                             Features
+                        </Link>
+                        <Link href="#process" className="text-black/60 hover:text-black transition-colors font-medium text-sm">
+                            Process
+                        </Link>
+                        <Link href="#testimonials" className="text-black/60 hover:text-black transition-colors font-medium text-sm">
+                            Testimonials
                         </Link>
                         <button
                             onClick={handleLogin}
-                            className="bg-fitexa-black hover:bg-neutral-900 text-fitexa-beige px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-500 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 border border-white/5 cursor-pointer"
+                            className="bg-[#0D4F31] hover:bg-[#0a3d26] text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-[0_4px_14px_rgba(13,79,49,0.2)] hover:shadow-[0_6px_20px_rgba(13,79,49,0.3)] hover:-translate-y-0.5"
                         >
-                            Login
+                            Get Started ↗
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* Bottom border glow */}
-            <div className="absolute bottom-[-1px] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-fitexa-green/10 to-transparent" />
         </nav>
     );
 }

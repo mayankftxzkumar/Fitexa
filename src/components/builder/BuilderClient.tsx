@@ -7,7 +7,7 @@ import type { AIProject, AIFeature } from '@/lib/types';
 import { PREBUILT_FEATURES } from '@/lib/types';
 import Image from 'next/image';
 
-const CATEGORIES = ['Gym', 'Zumba', 'Yoga', 'Dance', 'CrossFit', 'Pilates', 'Martial Arts', 'Swimming', 'Other'];
+const CATEGORIES = ['Restaurant', 'Clinic', 'Salon', 'Dentist', 'Gym', 'Real Estate', 'Bakery', 'Coaching Center', 'Repair Shop', 'Other'];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function BuilderClient({ user, project: initialProject }: { user: any; project: AIProject }) {
@@ -18,7 +18,6 @@ export default function BuilderClient({ user, project: initialProject }: { user:
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [activating, setActivating] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(true);
     const saveTimeout = useRef<NodeJS.Timeout | null>(null);
     const hasMounted = useRef(false);
 
@@ -49,9 +48,6 @@ export default function BuilderClient({ user, project: initialProject }: { user:
 
     // Drag state
     const [draggedFeature, setDraggedFeature] = useState<string | null>(null);
-
-    const bg = isDarkMode ? 'bg-[#050505] text-[#F5F2EB]' : 'bg-[#F5F2EB] text-[#050505]';
-    const muted = isDarkMode ? 'text-white/40' : 'text-black/40';
 
     // Check if user just returned from Google OAuth — reload project data
     useEffect(() => {
@@ -238,132 +234,132 @@ export default function BuilderClient({ user, project: initialProject }: { user:
         { n: 3, label: 'Telegram' },
     ];
 
-    const inputClass = `w-full px-4 py-3.5 rounded-xl text-sm font-medium transition-all outline-none ${isDarkMode ? 'bg-white/[0.04] border border-white/[0.08] text-white focus:border-white/20 focus:bg-white/[0.06] placeholder:text-white/20' : 'bg-white border border-black/[0.06] text-black focus:border-[#0D4F31]/30 focus:bg-white placeholder:text-black/25'}`;
+    const inputClass = "w-full px-4 py-3.5 rounded-[12px] text-sm font-medium transition-all outline-none bg-black/[0.02] border border-black/5 text-black focus:border-[#0D4F31]/30 focus:bg-white focus:shadow-[0_0_0_4px_rgba(13,79,49,0.05)] placeholder:text-black/30";
 
     return (
-        <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${bg} font-sans`}>
-            {/* Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className={`absolute top-[-20%] left-[-15%] w-[70vw] h-[70vh] rounded-full blur-[140px] animate-blob ${isDarkMode ? 'bg-[#0D4F31]/25' : 'bg-[#0D4F31]/8'}`} />
-                <div className={`absolute bottom-[-25%] right-[-10%] w-[60vw] h-[60vh] rounded-full blur-[120px] animate-blob animation-delay-2000 ${isDarkMode ? 'bg-[#0D4F31]/15' : 'bg-[#FCDDEC]/25'}`} />
-            </div>
-
+        <div className="min-h-screen relative overflow-hidden bg-[#F5F1E8] text-[#050505] font-sans">
             <div className="relative z-10 min-h-screen flex flex-col">
                 {/* Top Nav — Logo icon only */}
                 <nav className="flex items-center justify-between px-6 md:px-10 py-5">
                     <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2">
                         <Image src="/logo.png" alt="Fitexa" width={36} height={36} className="rounded-lg" unoptimized />
                     </button>
-                    <div className="flex items-center gap-3">
-                        <span className={`text-xs font-medium ${saving ? (isDarkMode ? 'text-yellow-400' : 'text-yellow-600') : saved ? (isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]') : muted}`}>
-                            {saving ? 'Saving...' : saved ? '✓ Saved' : ''}
+                    <div className="flex items-center gap-3 bg-black/[0.03] px-4 py-2 rounded-full border border-black/5">
+                        <div className={`w-2 h-2 rounded-full ${saving ? 'bg-yellow-500 animate-pulse' : saved ? 'bg-[#0D4F31]' : 'bg-black/20'}`} />
+                        <span className="text-xs font-bold uppercase tracking-wider text-black/60">
+                            {saving ? 'Saving...' : saved ? 'Saved' : 'Draft'}
                         </span>
-                        <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
-                            {isDarkMode ? '☀️' : '🌙'}
-                        </button>
                     </div>
                 </nav>
 
-                <main className="flex-grow px-6 md:px-10 lg:px-20 pt-4 pb-20 max-w-4xl mx-auto w-full">
-                    {/* AI Name */}
-                    <input
-                        type="text"
-                        value={aiName}
-                        onChange={e => setAiName(e.target.value)}
-                        className={`bg-transparent border-none outline-none text-3xl md:text-4xl font-[900] tracking-tight mb-8 w-full ${isDarkMode ? 'placeholder:text-white/15' : 'placeholder:text-black/15'}`}
-                        placeholder="Name your AI..."
-                    />
+                <main className="flex-grow px-6 md:px-10 lg:px-20 pt-8 pb-24 max-w-4xl mx-auto w-full flex flex-col items-center">
+                    <div className="w-full max-w-2xl text-center mb-10">
+                        {/* AI Name Editor */}
+                        <input
+                            type="text"
+                            value={aiName}
+                            onChange={e => setAiName(e.target.value)}
+                            className="bg-transparent border-none outline-none text-4xl md:text-5xl font-[900] tracking-tight mb-2 w-full text-center placeholder:text-black/20 text-[#050505]"
+                            placeholder="Name your agent..."
+                        />
+                        <p className="text-sm font-medium text-black/50">Setup your agent in minutes.</p>
+                    </div>
 
-                    {/* Stepper — 3 steps */}
-                    <div className="flex items-center gap-1 mb-10">
+                    {/* Minimal Stepper */}
+                    <div className="flex items-center justify-center gap-2 mb-10 w-full overflow-hidden max-w-3xl border border-black/5 bg-white rounded-full p-2 shadow-sm">
                         {steps.map((s, i) => (
-                            <div key={s.n} className="flex items-center">
+                            <div key={s.n} className="flex items-center min-w-0" style={{ flex: step === s.n ? 1.5 : 1 }}>
                                 <button
-                                    onClick={() => { setStep(s.n); }}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${step === s.n
-                                        ? (isDarkMode ? 'bg-white/10 text-white' : 'bg-[#0D4F31]/10 text-[#0D4F31]')
-                                        : (step > s.n
-                                            ? (isDarkMode ? 'text-[#86efac]/60' : 'text-[#0D4F31]/50')
-                                            : muted)
+                                    onClick={() => setStep(s.n)}
+                                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all select-none w-full border border-transparent
+                                        ${step === s.n
+                                            ? 'bg-black/[0.03] border-black/10 text-black shadow-inner'
+                                            : step > s.n
+                                                ? 'bg-transparent text-black/50 hover:bg-black/5'
+                                                : 'bg-transparent text-black/40 hover:bg-black/5'
                                         }`}
                                 >
-                                    <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${step === s.n
-                                        ? (isDarkMode ? 'bg-white text-black' : 'bg-[#0D4F31] text-white')
-                                        : step > s.n
-                                            ? (isDarkMode ? 'bg-[#86efac]/20 text-[#86efac]' : 'bg-[#0D4F31]/15 text-[#0D4F31]')
-                                            : (isDarkMode ? 'bg-white/5 text-white/30' : 'bg-black/5 text-black/30')
+                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 transition-all
+                                        ${step === s.n
+                                            ? 'bg-[#0D4F31] text-white shadow-md'
+                                            : step > s.n
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-black/5 text-black/40'
                                         }`}>
                                         {step > s.n ? '✓' : s.n}
                                     </span>
-                                    <span className="hidden sm:inline">{s.label}</span>
+                                    <span className={`hidden sm:inline whitespace-nowrap truncate ${step === s.n ? 'opacity-100' : 'opacity-70'}`}>{s.label}</span>
                                 </button>
                                 {i < steps.length - 1 && (
-                                    <div className={`w-6 h-px mx-1 ${step > s.n ? (isDarkMode ? 'bg-[#86efac]/30' : 'bg-[#0D4F31]/20') : (isDarkMode ? 'bg-white/5' : 'bg-black/5')}`} />
+                                    <div className={`h-px w-3 sm:w-6 mx-1 shrink-0 ${step > s.n ? 'bg-green-200' : 'bg-black/10'}`} />
                                 )}
                             </div>
                         ))}
                     </div>
 
-                    {/* Step Content */}
-                    <div className={`rounded-2xl border p-6 md:p-8 backdrop-blur-xl ${isDarkMode ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white/60 border-black/[0.04]'}`}>
+                    {/* Step Content Group */}
+                    <div className="bg-white rounded-[24px] border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-8 md:p-10 relative overflow-hidden w-full max-w-4xl">
 
                         {/* Step 1: Google Connect + Business Info */}
                         {step === 1 && (
-                            <div className="space-y-8">
-                                {/* Google Connect Card */}
+                            <div className="space-y-10 animate-fade-in-up">
                                 <div>
-                                    <h2 className="text-lg font-bold mb-1">Connect Google Business</h2>
-                                    <p className={`text-sm ${muted}`}>Link your Google Business Profile to auto-fill your business details and enable AI-powered features.</p>
+                                    <h2 className="text-xl font-bold mb-2">Connect Google Business</h2>
+                                    <p className="text-sm text-black/60 font-medium max-w-xl">Link your business profile to auto-fill details and activate smart review features.</p>
                                 </div>
-                                <div className={`rounded-xl p-6 border ${googleConnected ? (isDarkMode ? 'border-green-500/20 bg-green-500/5' : 'border-green-600/20 bg-green-600/5') : (isDarkMode ? 'border-blue-500/20 bg-blue-500/5' : 'border-blue-500/20 bg-blue-500/5')}`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${googleConnected ? (isDarkMode ? 'bg-green-500/10' : 'bg-green-600/10') : (isDarkMode ? 'bg-white/10' : 'bg-black/5')}`}>
-                                            {googleConnected ? '✅' : '🔗'}
+                                <div className={`rounded-[20px] p-6 border transition-all ${googleConnected ? 'border-green-600/20 bg-green-50' : 'border-[#0D4F31]/10 bg-[#0D4F31]/[0.02]'}`}>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0 ${googleConnected ? 'bg-green-100' : 'bg-white shadow-sm border border-black/5'}`}>
+                                            {googleConnected ? '✅' : '🏪'}
                                         </div>
                                         <div className="flex-1">
-                                            <p className={`font-bold text-sm ${googleConnected ? (isDarkMode ? 'text-green-400' : 'text-green-700') : (isDarkMode ? 'text-blue-400' : 'text-blue-600')}`}>
-                                                {googleConnected ? 'Google Business Connected' : 'Google Business Profile'}
+                                            <p className={`font-bold text-base ${googleConnected ? 'text-green-800' : 'text-black'}`}>
+                                                {googleConnected ? 'Google Profile Linked' : 'Google Business Profile'}
                                             </p>
-                                            <p className={`text-xs mt-1 ${muted}`}>
-                                                {googleConnected ? 'Your profile is linked. Business details have been auto-filled below.' : 'Connect to auto-fill your business info and enable review & SEO features.'}
+                                            <p className={`text-sm mt-1 ${googleConnected ? 'text-green-700' : 'text-black/60'}`}>
+                                                {googleConnected ? 'Your profile is securely connected.' : 'Connect to instantly import your public details.'}
                                             </p>
                                         </div>
                                         <button
                                             onClick={() => window.location.href = `/api/auth/google?projectId=${initialProject.id}`}
-                                            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${googleConnected ? (isDarkMode ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-green-600/10 border-green-600/20 text-green-700') : (isDarkMode ? 'bg-white/10 border-white/20 hover:bg-white/15 text-white' : 'bg-[#0D4F31] border-[#0D4F31] hover:bg-[#0a3c25] text-white')}`}
+                                            className={`w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold transition-all border shrink-0 uppercase tracking-widest
+                                                ${googleConnected
+                                                    ? 'bg-green-100 border-green-200 text-green-800 hover:bg-green-200'
+                                                    : 'bg-[#0D4F31] border-[#0D4F31] hover:bg-[#0a3c25] text-white shadow-md'}`}
                                         >
-                                            {googleConnected ? '✓ Connected' : 'Connect Google'}
+                                            {googleConnected ? 'Reconnect Google' : 'Connect Google'}
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Business Info Form (auto-filled or manual) */}
+                                <hr className="border-black/5" />
+
                                 <div>
-                                    <h3 className="text-base font-bold mb-1">Business Details</h3>
-                                    <p className={`text-sm mb-5 ${muted}`}>
+                                    <h3 className="text-xl font-bold mb-2">Business Details</h3>
+                                    <p className="text-sm text-black/60 font-medium mb-6">
                                         {googleConnected
-                                            ? 'Auto-filled from your Google Business Profile. Edit as needed.'
-                                            : 'Fill in your business details manually, or connect Google above to auto-fill.'}
+                                            ? 'Auto-filled from Google. Feel free to tweak how the AI describes you.'
+                                            : 'Tell the AI about your business so it knows how to respond.'}
                                     </p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${muted}`}>Business Name</label>
-                                            <input type="text" value={bizName} onChange={e => setBizName(e.target.value)} className={inputClass} placeholder="FitGym Pro" />
+                                            <label className="block text-[11px] font-bold uppercase tracking-widest mb-2 text-black/50 ml-1">Business Name</label>
+                                            <input type="text" value={bizName} onChange={e => setBizName(e.target.value)} className={inputClass} placeholder="Acme Cafe" />
                                         </div>
                                         <div>
-                                            <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${muted}`}>Location</label>
+                                            <label className="block text-[11px] font-bold uppercase tracking-widest mb-2 text-black/50 ml-1">Location</label>
                                             <input type="text" value={bizLocation} onChange={e => setBizLocation(e.target.value)} className={inputClass} placeholder="Mumbai, India" />
                                         </div>
                                         <div>
-                                            <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${muted}`}>Category</label>
-                                            <select value={bizCategory} onChange={e => setBizCategory(e.target.value)} className={inputClass}>
+                                            <label className="block text-[11px] font-bold uppercase tracking-widest mb-2 text-black/50 ml-1">Category</label>
+                                            <select value={bizCategory} onChange={e => setBizCategory(e.target.value)} className={`${inputClass} appearance-none cursor-pointer bg-no-repeat bg-[right_1rem_center] bg-[url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>')]`}>
                                                 <option value="">Select category...</option>
                                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                             </select>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${muted}`}>Short Description</label>
-                                            <textarea rows={3} value={bizDescription} onChange={e => setBizDescription(e.target.value)} className={`${inputClass} resize-none`} placeholder="A brief description of the business..." />
+                                            <label className="block text-[11px] font-bold uppercase tracking-widest mb-2 text-black/50 ml-1">Short Description (Agent Persona)</label>
+                                            <textarea rows={4} value={bizDescription} onChange={e => setBizDescription(e.target.value)} className={`${inputClass} resize-none`} placeholder="A cozy local cafe serving artisanal coffee and fresh baked pastries daily..." />
                                         </div>
                                     </div>
                                 </div>
@@ -372,17 +368,20 @@ export default function BuilderClient({ user, project: initialProject }: { user:
 
                         {/* Step 2: Feature Builder */}
                         {step === 2 && (
-                            <div className="space-y-6">
+                            <div className="space-y-8 animate-fade-in-up">
                                 <div>
-                                    <h2 className="text-lg font-bold mb-1">Feature Builder</h2>
-                                    <p className={`text-sm ${muted}`}>Drag features to activate them, or click to toggle. These determine how your AI agent responds.</p>
+                                    <h2 className="text-xl font-bold mb-2">Feature Configuration</h2>
+                                    <p className="text-sm text-black/60 font-medium">Activate features by dragging them to the active zone, or tap to toggle.</p>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* Available */}
-                                    <div>
-                                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${muted}`}>Available Features</p>
-                                        <div className="space-y-2.5">
+                                    <div className="bg-[#F5F1E8]/50 p-5 rounded-[20px] border border-black/5">
+                                        <div className="flex items-center gap-2 mb-4 pl-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
+                                            <p className="text-xs font-bold uppercase tracking-widest text-black/50">Available Plugins</p>
+                                        </div>
+                                        <div className="space-y-3">
                                             {availableFeatures.map(f => (
                                                 <div
                                                     key={f.id}
@@ -390,53 +389,71 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                                     onDragStart={() => !f.disabled && handleDragStart(f.id)}
                                                     onDragEnd={handleDragEnd}
                                                     onClick={() => !f.disabled && toggleFeature(f.id)}
-                                                    className={`rounded-xl p-4 border transition-all select-none ${f.disabled
-                                                        ? `opacity-40 cursor-not-allowed ${isDarkMode ? 'bg-white/[0.01] border-white/5' : 'bg-black/[0.01] border-black/5'}`
-                                                        : `cursor-grab active:cursor-grabbing ${isDarkMode ? 'bg-white/[0.03] border-white/[0.06] hover:border-white/15' : 'bg-white border-black/[0.04] hover:border-black/10'}`
-                                                        } ${draggedFeature === f.id ? 'opacity-40 scale-95' : ''}`}
+                                                    className={`rounded-[16px] p-4 border transition-all select-none ${f.disabled
+                                                        ? 'opacity-50 cursor-not-allowed bg-black/[0.02] border-black/5'
+                                                        : 'cursor-grab active:cursor-grabbing bg-white border-black/5 shadow-sm hover:shadow-md hover:border-black/10'
+                                                        } ${draggedFeature === f.id ? 'opacity-40 scale-[0.98]' : ''}`}
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-lg">{f.icon}</span>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-full bg-[#f0f9f4] flex items-center justify-center text-xl shrink-0">
+                                                            {f.icon}
+                                                        </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold truncate">{f.name}</p>
-                                                            <p className={`text-[11px] mt-0.5 ${muted}`}>{f.comingSoon ? 'Coming soon' : f.description}</p>
+                                                            <p className="text-sm font-bold truncate text-black">{f.name}</p>
+                                                            <p className="text-xs mt-0.5 text-black/50 font-medium leading-snug">{f.comingSoon ? 'Coming soon' : f.description}</p>
                                                         </div>
                                                         {!f.disabled && (
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={muted}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                                            <div className="text-black/20 group-hover:text-black/50 transition-colors">
+                                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
                                             ))}
                                             {availableFeatures.length === 0 && (
-                                                <p className={`text-sm text-center py-6 ${muted}`}>All features activated! 🎉</p>
+                                                <div className="py-10 text-center">
+                                                    <span className="text-3xl mb-2 block">✨</span>
+                                                    <p className="text-sm font-bold text-black/50">All power-ups active!</p>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
 
                                     {/* Active */}
-                                    <div>
-                                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>Active Configuration</p>
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2 mb-4 pl-1">
+                                            <div className="w-2 h-2 rounded-full bg-[#0D4F31] animate-[pulse_2s_ease-in-out_infinite]" />
+                                            <p className="text-xs font-bold uppercase tracking-widest text-[#0D4F31]">Active Intelligence</p>
+                                        </div>
                                         <div
                                             onDragOver={e => e.preventDefault()}
                                             onDrop={handleDropToActive}
-                                            className={`min-h-[200px] rounded-xl border-2 border-dashed p-3 transition-colors space-y-2.5 ${isDarkMode ? 'border-[#86efac]/20 bg-[#86efac]/[0.02]' : 'border-[#0D4F31]/15 bg-[#0D4F31]/[0.02]'} ${draggedFeature ? (isDarkMode ? 'border-[#86efac]/40 bg-[#86efac]/[0.05]' : 'border-[#0D4F31]/30 bg-[#0D4F31]/[0.04]') : ''}`}
+                                            className={`flex-1 min-h-[300px] rounded-[20px] border-2 border-dashed p-4 transition-all duration-300 space-y-3
+                                                ${draggedFeature ? 'border-[#0D4F31]/30 bg-[#f0f9f4] scale-[1.02]' : 'border-[#0D4F31]/15 bg-white'}`}
                                         >
                                             {activeFeatures.length === 0 && (
-                                                <p className={`text-sm text-center py-10 ${muted}`}>Drag features here or click to enable</p>
+                                                <div className="h-full flex flex-col items-center justify-center text-center px-6 opacity-40">
+                                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-4 text-black"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                                                    <p className="text-sm font-bold">Drop features here</p>
+                                                    <p className="text-xs mt-1">Target zone for activating agent skills</p>
+                                                </div>
                                             )}
                                             {activeFeatures.map(f => (
                                                 <div
                                                     key={f.id}
-                                                    className={`rounded-xl p-4 border transition-all ${isDarkMode ? 'bg-[#86efac]/5 border-[#86efac]/15' : 'bg-[#0D4F31]/5 border-[#0D4F31]/10'}`}
+                                                    className="rounded-[16px] p-4 bg-white border border-[#0D4F31]/20 shadow-[0_4px_12px_rgba(13,79,49,0.06)] relative group"
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-lg">{f.icon}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold truncate">{f.name}</p>
-                                                            <p className={`text-[11px] mt-0.5 ${muted}`}>{f.description}</p>
+                                                    <div className="absolute top-0 bottom-0 left-0 w-1 bg-[#0D4F31] rounded-l-[16px]"></div>
+                                                    <div className="flex items-center gap-4 pl-2">
+                                                        <div className="w-10 h-10 rounded-full bg-[#f0f9f4] flex items-center justify-center text-xl shrink-0">
+                                                            {f.icon}
                                                         </div>
-                                                        <button onClick={() => toggleFeature(f.id)} className="text-red-400/60 hover:text-red-400 transition-colors p-1">
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold truncate text-black">{f.name}</p>
+                                                            <p className="text-xs mt-0.5 text-black/50 font-medium leading-snug">{f.description}</p>
+                                                        </div>
+                                                        <button onClick={() => toggleFeature(f.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-100 hover:scale-105 shrink-0">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -449,120 +466,110 @@ export default function BuilderClient({ user, project: initialProject }: { user:
 
                         {/* Step 3: Telegram Bot Connection */}
                         {step === 3 && (
-                            <div className="space-y-6">
+                            <div className="space-y-8 animate-fade-in-up">
                                 <div>
-                                    <h2 className="text-lg font-bold mb-1">Connect Your Telegram Bot</h2>
-                                    <p className={`text-sm ${muted}`}>Your AI agent will chat with customers through a Telegram bot. It only takes 2 minutes to set up!</p>
+                                    <h2 className="text-xl font-bold mb-2">Deploy via Telegram</h2>
+                                    <p className="text-sm text-black/60 font-medium max-w-xl">Link a Telegram Bot to give your AI an interface to start chatting with your customers.</p>
                                 </div>
 
                                 {/* Connected status */}
                                 {(botUsername || initialProject?.telegram_bot_username) && (
-                                    <div className={`rounded-xl p-5 border ${isDarkMode ? 'border-green-500/20 bg-green-500/5' : 'border-green-600/20 bg-green-600/5'}`}>
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDarkMode ? 'bg-green-500/10' : 'bg-green-600/10'}`}>
+                                    <div className="rounded-[16px] p-6 border border-[#0D4F31]/20 bg-[#f0f9f4]">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                                            <div className="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-white shadow-sm border border-[#0D4F31]/10 shrink-0">
                                                 🤖
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold text-sm ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
-                                                    ✅ Bot Connected
+                                                <p className="font-bold text-base text-[#0D4F31]">
+                                                    Bot Verified & Ready
                                                 </p>
-                                                <p className={`text-xs mt-0.5 ${muted}`}>
-                                                    Your bot <a href={`https://t.me/${botUsername || initialProject?.telegram_bot_username}`} target="_blank" rel="noopener noreferrer" className={`font-bold underline ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>@{botUsername || initialProject?.telegram_bot_username}</a> is ready to receive messages.
+                                                <p className="text-sm mt-1 text-[#0D4F31]/80 font-medium">
+                                                    Your audience can interact at <a href={`https://t.me/${botUsername || initialProject?.telegram_bot_username}`} target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-[#0D4F31]">@{botUsername || initialProject?.telegram_bot_username}</a>
                                                 </p>
                                             </div>
-                                            <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${isDarkMode ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-green-600/10 text-green-700 border border-green-600/20'}`}>
-                                                Live
-                                            </span>
+                                            <div className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-white text-[#0D4F31] shadow-sm shrink-0 border border-[#0D4F31]/10 flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-[#0D4F31] animate-[pulse_2s_ease-in-out_infinite]" />
+                                                Live Status
+                                            </div>
                                         </div>
                                     </div>
                                 )}
-                                <div className={`rounded-xl p-6 text-sm space-y-4 ${isDarkMode ? 'bg-[#86efac]/5 border border-[#86efac]/10' : 'bg-[#0D4F31]/5 border border-[#0D4F31]/10'}`}>
-                                    <p className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>📱 Quick Setup Guide</p>
-                                    <div className={`space-y-3.5 ${isDarkMode ? 'text-white/70' : 'text-black/70'}`}>
-                                        <div className="flex items-start gap-3">
-                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>1</span>
-                                            <p>Open <strong>Telegram</strong> on your phone or desktop and search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className={`font-bold underline ${isDarkMode ? 'text-[#86efac]' : 'text-[#0D4F31]'}`}>@BotFather</a></p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>2</span>
-                                            <p>Tap <strong>Start</strong>, then type <code className={`px-1.5 py-0.5 rounded text-xs font-bold ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>/newbot</code> and send it</p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>3</span>
-                                            <p>Give your bot a <strong>display name</strong> (e.g. &quot;My Business AI&quot;) and a <strong>username</strong> ending in <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>bot</code> (e.g. <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>MyAI_bot</code>)</p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>4</span>
-                                            <p>BotFather will send you an <strong>API token</strong> — it looks like <code className={`px-1 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>123456:ABC-xyz...</code></p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${isDarkMode ? 'bg-[#86efac]/15 text-[#86efac]' : 'bg-[#0D4F31]/10 text-[#0D4F31]'}`}>5</span>
-                                            <p><strong>Copy</strong> that token and <strong>paste it below</strong> ↓</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 bg-[#F5F1E8]/30 rounded-[20px] p-6 border border-black/5">
+                                    {/* Instructions Block */}
+                                    <div className="md:col-span-3">
+                                        <p className="font-bold text-xs uppercase tracking-widest text-black/50 mb-5 ml-1">📱 3-Step Setup Guide</p>
+                                        <div className="space-y-5 text-black/70 text-sm font-medium">
+                                            <div className="flex items-start gap-4">
+                                                <span className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-white shadow-sm border border-black/5 text-[#0D4F31]">1</span>
+                                                <p className="mt-1.5 leading-relaxed">Open <strong>Telegram</strong> on your device and search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="font-bold text-[#0D4F31] hover:underline">@BotFather</a></p>
+                                            </div>
+                                            <div className="flex items-start gap-4">
+                                                <span className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-white shadow-sm border border-black/5 text-[#0D4F31]">2</span>
+                                                <p className="mt-1.5 leading-relaxed">Send <code className="px-1.5 py-0.5 rounded bg-white border border-black/10 font-mono text-xs">/newbot</code>, give it a name, and choose a username ending in <code className="font-mono text-xs">bot</code>.</p>
+                                            </div>
+                                            <div className="flex items-start gap-4">
+                                                <span className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-white shadow-sm border border-black/5 text-[#0D4F31]">3</span>
+                                                <p className="mt-1.5 leading-relaxed">Copy the <strong>HTTP API Token</strong> provided by BotFather.</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className={`rounded-xl p-4 ${isDarkMode ? 'bg-white/[0.02] border border-white/[0.06]' : 'bg-black/[0.02] border border-black/[0.05]'}`}>
-                                    <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-yellow-400/80' : 'text-yellow-700'}`}>💡 Pro Tip</p>
-                                    <p className={`text-xs ${muted}`}>Already have a bot? You can use an existing one too — just get its token from @BotFather by sending <code className={`px-1 py-0.5 rounded text-[11px] ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}>/mybots</code> and selecting your bot → API Token.</p>
-                                </div>
+                                    {/* Input Block */}
+                                    <div className="md:col-span-2 flex flex-col justify-center">
+                                        <div className="bg-white p-5 rounded-[16px] border border-black/5 shadow-sm">
+                                            <label className="block text-[11px] font-bold uppercase tracking-widest mb-3 text-black/50">HTTP API Token</label>
+                                            <input
+                                                type="text"
+                                                value={telegramToken}
+                                                onChange={e => { setTelegramToken(e.target.value); setTokenError(''); setBotUsername(''); }}
+                                                className={`${inputClass} font-mono text-xs`}
+                                                placeholder="123456:ABC-DEF1234ghIkl-zyx..."
+                                            />
+                                            {tokenError && <p className="mt-3 text-xs text-red-500 font-bold bg-red-50 px-3 py-2 rounded-lg border border-red-100">{tokenError}</p>}
 
-                                <div>
-                                    <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${muted}`}>Bot Token</label>
-                                    <input
-                                        type="text"
-                                        value={telegramToken}
-                                        onChange={e => { setTelegramToken(e.target.value); setTokenError(''); setBotUsername(''); }}
-                                        className={`${inputClass} font-mono`}
-                                        placeholder="123456789:ABCdefGHI..."
-                                    />
-                                    {tokenError && <p className="mt-2 text-xs text-red-400 font-medium">{tokenError}</p>}
-                                    {botUsername && !tokenError && (
-                                        <div className={`mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl ${isDarkMode ? 'bg-green-500/5 border border-green-500/15' : 'bg-green-600/5 border border-green-600/15'}`}>
-                                            <span className="text-green-400 text-sm">✓</span>
-                                            <span className={`text-sm font-medium ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
-                                                Bot verified: <a href={`https://t.me/${botUsername}`} target="_blank" rel="noopener noreferrer" className="underline">@{botUsername}</a>
-                                            </span>
+                                            {validatingToken && (
+                                                <div className="mt-3 flex items-center gap-3 text-xs font-bold text-[#0D4F31] uppercase tracking-wider bg-[#0D4F31]/5 px-4 py-3 rounded-xl border border-[#0D4F31]/10">
+                                                    <svg className="animate-spin h-4 w-4 text-[#0D4F31]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    Verifying Token...
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                    {validatingToken && (
-                                        <p className={`mt-2 text-xs font-medium ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Validating token...</p>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Navigation */}
-                    <div className="flex items-center justify-between mt-8">
-                        {step > 1 ? (
-                            <button onClick={goBack} className={`px-6 py-3 rounded-xl text-sm font-bold transition-all border ${isDarkMode ? 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white' : 'border-[#0D4F31]/15 text-[#0D4F31]/60 hover:bg-[#0D4F31]/5 hover:text-[#0D4F31]'}`}>
-                                Back
-                            </button>
-                        ) : <div />}
-                        {step < 3 ? (
-                            <button onClick={goNext} className={`px-7 py-3 rounded-xl text-sm font-bold transition-all ${isDarkMode ? 'bg-white text-black hover:bg-gray-100 shadow-[0_0_25px_rgba(255,255,255,0.07)]' : 'bg-[#050505] text-white hover:bg-gray-800 shadow-[0_0_25px_rgba(0,0,0,0.12)]'}`}>
-                                Continue
-                            </button>
-                        ) : (
-                            <button onClick={handleActivate} disabled={activating || validatingToken} className={`px-7 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${isDarkMode ? 'bg-[#86efac] text-black hover:bg-[#6ee7a0] shadow-[0_0_30px_rgba(134,239,172,0.15)]' : 'bg-[#0D4F31] text-white hover:bg-[#0a3c25] shadow-[0_0_30px_rgba(13,79,49,0.2)]'}`}>
-                                {activating ? 'Activating...' : '🚀 Activate AI'}
-                            </button>
-                        )}
+                    {/* Bottom Navigation */}
+                    <div className="flex flex-col-reverse sm:flex-row items-center justify-between mt-10 w-full max-w-4xl gap-4">
+                        <div className="w-full sm:w-auto">
+                            {step > 1 && (
+                                <button onClick={goBack} className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-bold bg-white text-black border border-black/10 hover:bg-black/5 transition-all shadow-sm">
+                                    ← Go Back
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="w-full sm:w-auto">
+                            {step < 3 ? (
+                                <button onClick={goNext} className="w-full sm:w-auto px-10 py-3.5 rounded-full text-sm font-bold bg-[#050505] text-white hover:bg-black/80 transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5">
+                                    Continue →
+                                </button>
+                            ) : (
+                                <button onClick={handleActivate} disabled={activating || validatingToken} className="w-full sm:w-auto px-10 py-3.5 rounded-full text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-[#0D4F31] text-white hover:bg-[#0a3c25] shadow-[0_8px_24px_rgba(13,79,49,0.25)] hover:shadow-[0_12px_32px_rgba(13,79,49,0.35)] hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                    {activating ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Activating AI...
+                                        </>
+                                    ) : '🚀 Activate & Deploy Agent'}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </main>
             </div>
-
-            <style jsx>{`
-                @keyframes blob {
-                    0% { transform: translate(0, 0) scale(1); }
-                    33% { transform: translate(30px, -50px) scale(1.08); }
-                    66% { transform: translate(-20px, 20px) scale(0.92); }
-                    100% { transform: translate(0, 0) scale(1); }
-                }
-                .animate-blob { animation: blob 22s infinite alternate ease-in-out; }
-                .animation-delay-2000 { animation-delay: 2s; }
-            `}</style>
         </div>
     );
 }
