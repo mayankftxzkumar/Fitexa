@@ -24,7 +24,7 @@ export default function HowItWorks() {
     };
 
     return (
-        <section ref={containerRef} className="py-32 bg-[#faf9f6] text-[#050505] relative overflow-hidden">
+        <section id="process" ref={containerRef} className="py-32 bg-[#faf9f6] text-[#050505] relative overflow-hidden">
             {/* Ambient Background Blur */}
             <div className="absolute top-1/4 left-[-10%] w-[500px] h-[500px] bg-[#0D4F31]/5 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-1/4 right-[-10%] w-[600px] h-[600px] bg-emerald-200/10 rounded-full blur-[120px] pointer-events-none" />

@@ -37,9 +37,6 @@ export default function Navigation() {
                         <Link href="#process" className="text-black/60 hover:text-black transition-colors font-medium text-sm">
                             Process
                         </Link>
-                        <Link href="#testimonials" className="text-black/60 hover:text-black transition-colors font-medium text-sm">
-                            Testimonials
-                        </Link>
                         <button
                             onClick={handleLogin}
                             className="bg-[#0D4F31] hover:bg-[#0a3d26] text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-[0_4px_14px_rgba(13,79,49,0.2)] hover:shadow-[0_6px_20px_rgba(13,79,49,0.3)] hover:-translate-y-0.5"
