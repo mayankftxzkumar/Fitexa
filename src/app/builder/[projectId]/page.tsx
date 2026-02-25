@@ -26,10 +26,14 @@ export default async function BuilderPage({ params }: PageProps) {
 
     // Strip only OAuth tokens (server secrets) before passing to client
     // telegram_token is user-entered and needs to be editable in the builder
+    // Compute google_connected BEFORE stripping tokens
     const project = rawProject ? (() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { google_access_token, google_refresh_token, ...safe } = rawProject;
-        return safe;
+        return {
+            ...safe,
+            google_connected: !!(google_refresh_token && rawProject.google_location_id),
+        };
     })() : null;
 
     if (!project) {

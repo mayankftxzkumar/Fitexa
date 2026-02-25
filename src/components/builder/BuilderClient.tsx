@@ -473,7 +473,7 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                 </div>
 
                                 {/* Connected status */}
-                                {(botUsername || initialProject?.telegram_bot_username) && (
+                                {(botUsername || initialProject?.telegram_bot_username || initialProject?.telegram_token) && (
                                     <div className="rounded-[16px] p-6 border border-[#0D4F31]/20 bg-[#f0f9f4]">
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
                                             <div className="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-white shadow-sm border border-[#0D4F31]/10 shrink-0">
@@ -484,7 +484,9 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                                     Bot Verified & Ready
                                                 </p>
                                                 <p className="text-sm mt-1 text-[#0D4F31]/80 font-medium">
-                                                    Your audience can interact at <a href={`https://t.me/${botUsername || initialProject?.telegram_bot_username}`} target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-[#0D4F31]">@{botUsername || initialProject?.telegram_bot_username}</a>
+                                                    {(botUsername || initialProject?.telegram_bot_username)
+                                                        ? <>Your audience can interact at <a href={`https://t.me/${botUsername || initialProject?.telegram_bot_username}`} target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-[#0D4F31]">@{botUsername || initialProject?.telegram_bot_username}</a></>
+                                                        : 'Bot token is saved. Click Activate to go live.'}
                                                 </p>
                                             </div>
                                             <div className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-white text-[#0D4F31] shadow-sm shrink-0 border border-[#0D4F31]/10 flex items-center gap-2">

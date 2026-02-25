@@ -1,10 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabaseAdmin';
 import { NextRequest, NextResponse } from 'next/server';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -42,7 +40,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_token_exchange`, request.url));
         }
 
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabase = createAdminClient();
 
         // Fetch user's Google Business accounts
         const accountsResponse = await fetch('https://mybusinessbusinessinformation.googleapis.com/v1/accounts', {
