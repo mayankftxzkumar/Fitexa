@@ -130,6 +130,32 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL(`/builder/${projectId}?error=db_save_failed`, request.url));
         }
 
+        // Auto-enable google_review_reply feature after successful GBP connection
+        try {
+            const { data: project } = await supabase
+                .from('ai_projects')
+                .select('enabled_features')
+                .eq('id', projectId)
+                .single();
+
+            const currentFeatures: string[] = project?.enabled_features || [];
+
+            if (!currentFeatures.includes('google_review_reply')) {
+                const updatedFeatures = [...currentFeatures, 'google_review_reply'];
+
+                const { error: featErr } = await supabase
+                    .from('ai_projects')
+                    .update({ enabled_features: updatedFeatures })
+                    .eq('id', projectId);
+
+                if (featErr) {
+                    console.error('[Google Callback] Failed to auto-enable google_review_reply:', featErr);
+                }
+            }
+        } catch (featError) {
+            console.error('[Google Callback] Error auto-enabling google_review_reply:', featError);
+        }
+
         return NextResponse.redirect(new URL(`/builder/${projectId}?google=connected`, request.url));
 
     } catch (err) {
