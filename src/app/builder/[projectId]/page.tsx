@@ -32,7 +32,7 @@ export default async function BuilderPage({ params }: PageProps) {
         const { google_access_token, google_refresh_token, ...safe } = rawProject;
         return {
             ...safe,
-            google_connected: !!(google_refresh_token && rawProject.google_location_id),
+            google_connected: !!google_refresh_token,
         };
     })() : null;
 

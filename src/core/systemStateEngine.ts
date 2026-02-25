@@ -44,7 +44,7 @@ export async function getSystemState(projectId: string): Promise<SystemState> {
         }
 
         const state: SystemState = {
-            googleConnected: !!(project.google_refresh_token && project.google_location_id),
+            googleConnected: !!project.google_refresh_token,
             telegramConnected: !!project.telegram_token,
             enabledFeatures: project.enabled_features || [],
             actionsUsedToday: 0,

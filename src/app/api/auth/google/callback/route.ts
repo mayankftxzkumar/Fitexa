@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
         const supabase = createAdminClient();
 
         // Fetch user's Google Business accounts
-        const accountsResponse = await fetch('https://mybusinessbusinessinformation.googleapis.com/v1/accounts', {
+        // NOTE: accounts listing lives on the Account Management API, NOT Business Information API
+        const accountsResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
             headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
         });
 
@@ -54,17 +55,21 @@ export async function GET(request: NextRequest) {
         let businessCategory = '';
         let businessDescription = '';
 
-        if (accountsData.accounts && accountsData.accounts.length > 0) {
+        if (accountsData.error) {
+            console.warn('[Google Callback] Accounts API error:', accountsData.error);
+        } else if (accountsData.accounts && accountsData.accounts.length > 0) {
             const accountName = accountsData.accounts[0].name;
 
-            // Fetch locations for the first account
+            // Fetch locations for the first account (this endpoint IS on the Business Information API)
             const locListResponse = await fetch(
                 `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title,storefrontAddress,categories,profile`,
                 { headers: { 'Authorization': `Bearer ${tokenData.access_token}` } }
             );
             const locListData = await locListResponse.json();
 
-            if (locListData.locations && locListData.locations.length > 0) {
+            if (locListData.error) {
+                console.warn('[Google Callback] Locations API error:', locListData.error);
+            } else if (locListData.locations && locListData.locations.length > 0) {
                 const loc = locListData.locations[0];
                 locationId = loc.name || ''; // format: "locations/XXXXX"
 
@@ -94,6 +99,8 @@ export async function GET(request: NextRequest) {
                     businessDescription = loc.profile.description;
                 }
             }
+        } else {
+            console.warn('[Google Callback] No accounts found for this Google user');
         }
 
         // Save tokens, location, and business data to DB
