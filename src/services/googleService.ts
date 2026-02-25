@@ -6,6 +6,7 @@
 
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import type { AIProject, ActionResult } from '@/lib/types';
+import { checkAndTrackLLMUsage } from '@/core/llmGuard';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
@@ -170,6 +171,13 @@ export async function replyToLatestReviews(
     for (const review of toReply) {
         // Generate AI reply
         const prompt = `You are the owner of "${project.business_name}", a ${project.business_category} in ${project.business_location}. Provide a polite, professional, and SEO-friendly response to the following customer review. Keep it under 3 sentences. Mention the business name organically if positive. If negative, apologize professionally and offer an offline contact path.`;
+
+        // Check LLM usage before generating AI reply
+        const llmGuard = await checkAndTrackLLMUsage(project.id, 'review_reply');
+        if (!llmGuard.allowed) {
+            console.warn('[GOOGLE] LLM limit reached during review replies — stopping');
+            break;
+        }
 
         const aiReply = await callPerplexitySimple(prompt, `Rating: ${review.starRating}\nReview Text: ${review.comment}`);
         if (!aiReply) continue;

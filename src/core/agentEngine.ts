@@ -12,6 +12,9 @@ import { executeAction } from '@/core/actionRegistry';
 import { logActivity } from '@/logging/activityLogger';
 import { checkRateLimit } from '@/core/rateLimiter';
 import { validateEnv } from '@/lib/envGuard';
+import { getSystemState, buildSystemResponse } from '@/core/systemStateEngine';
+import type { SystemQueryType } from '@/core/systemStateEngine';
+import { checkAndTrackLLMUsage } from '@/core/llmGuard';
 
 // One-time startup validation
 const envCheck = validateEnv();
@@ -54,14 +57,55 @@ export async function handleMessage(input: AgentInput): Promise<string> {
     // ── 3. Build system prompt ──
     const systemPrompt = buildSystemPrompt(project);
 
-    // ── 4. Classify intent via LLM ──
+    // ── 4. Classify intent via LLM (with usage guard) ──
     console.log('[AGENT] Classifying intent...');
+
+    // Check LLM usage limit before calling Perplexity
+    const llmGuard = await checkAndTrackLLMUsage(projectId, 'intent');
+    if (!llmGuard.allowed) {
+        console.warn('[AGENT] LLM daily limit reached for intent classification');
+        await logActivity(
+            projectId, 'llm_limit', 'usage_limit_exceeded' as 'success' | 'failed',
+            { userMessage: message, type: 'intent_classification' },
+            { success: false, message: '⚠️ Daily AI usage limit reached.' },
+        );
+        return '⚠️ Daily AI usage limit reached. Please try again tomorrow.';
+    }
+
     const intent = await classifyIntent(systemPrompt, history, message);
     console.log(`[AGENT] Intent: type="${intent.type}" action="${intent.action}"`);
 
     let reply: string;
 
     // ── 5. Route based on intent type ──
+
+    // ── 5a. System query (DB-driven, no LLM, no rate limit) ──
+    if (intent.type === 'system_query' && intent.query) {
+        console.log(`[AGENT] System query: "${intent.query}"`);
+        const state = await getSystemState(projectId);
+        reply = buildSystemResponse(intent.query as SystemQueryType, state);
+
+        // Save conversation with system response
+        const updated = [
+            ...history,
+            { role: 'user', content: message },
+            { role: 'assistant', content: reply },
+        ].slice(-20);
+
+        if (convo) {
+            await supabase.from('ai_conversations').update({ messages: updated }).eq('id', convo.id);
+        } else {
+            await supabase.from('ai_conversations').insert({
+                project_id: projectId,
+                chat_id: String(chatId),
+                messages: updated,
+            });
+        }
+        console.log('[AGENT] System query response saved');
+        return reply;
+    }
+
+    // ── 5b. Action execution (with rate limiting) ──
     if (intent.type === 'action' && intent.action) {
         // ── 5a. Rate limit check (actions only, never chat) ──
         const rateCheck = await checkRateLimit(projectId, intent.action);

@@ -5,8 +5,15 @@
  */
 
 import type { AIProject, ActionResult } from '@/lib/types';
+import { checkAndTrackLLMUsage } from '@/core/llmGuard';
 
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY!;
+
+const LLM_LIMIT_MSG: ActionResult = {
+    success: false,
+    message: '⚠️ Daily AI usage limit reached. Please try again tomorrow.',
+    error: 'llm_limit_exceeded',
+};
 
 // ────────────────────────────────────────────────────────
 // Generate SEO-optimized business description
@@ -24,6 +31,9 @@ Category: ${project.business_category}
 Location: ${project.business_location}
 Current Description: ${project.business_description || 'None'}
 ${payload.focus ? `Focus areas: ${payload.focus}` : ''}`;
+
+    const guard1 = await checkAndTrackLLMUsage(project.id, 'seo_description');
+    if (!guard1.allowed) return LLM_LIMIT_MSG;
 
     const result = await callPerplexity(prompt);
     if (!result) {
@@ -56,6 +66,9 @@ Location: ${project.business_location}
 Topic: ${topic}
 ${payload.tone ? `Tone: ${payload.tone}` : 'Tone: Professional and friendly'}`;
 
+    const guard2 = await checkAndTrackLLMUsage(project.id, 'seo_post');
+    if (!guard2.allowed) return LLM_LIMIT_MSG;
+
     const result = await callPerplexity(prompt);
     if (!result) {
         return { success: false, message: '❌ Failed to generate post content.', error: 'LLM call failed' };
@@ -84,6 +97,9 @@ Category: ${project.business_category}
 Location: ${project.business_location}
 Description: ${project.business_description || 'N/A'}
 ${payload.focus ? `Specific focus: ${payload.focus}` : ''}`;
+
+    const guard3 = await checkAndTrackLLMUsage(project.id, 'seo_keywords');
+    if (!guard3.allowed) return LLM_LIMIT_MSG;
 
     const result = await callPerplexity(prompt);
     if (!result) {

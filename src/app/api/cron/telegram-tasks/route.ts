@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin';
 import { NextResponse } from 'next/server';
 import * as telegramService from '@/services/telegramService';
 import { callPerplexity } from '@/core/intentEngine';
+import { checkAndTrackLLMUsage } from '@/core/llmGuard';
 
 export async function GET(request: Request) {
     // CRON_SECRET is REQUIRED — block if not configured
@@ -41,10 +42,18 @@ export async function GET(request: Request) {
                 const reason = task.context?.reason || 'User showed interest previously';
                 const followUpPrompt = `You are the assistant for "${project.business_name}", a ${project.business_category} in ${project.business_location}. A potential customer showed interest earlier. The context: "${reason}". Write a short, warm follow-up message (2-3 sentences) encouraging them to visit or book. Be natural, not salesy. Do not reveal you are AI. Do not use markdown. Plain text only.`;
 
-                const aiRes = await callPerplexity([
-                    { role: 'user', content: followUpPrompt },
-                ]);
-                const followUpText = aiRes || `Hey! 👋 Just checking in — we'd love to see you at ${project.business_name}. Feel free to reach out if you have any questions!`;
+                // Check LLM usage guard before calling Perplexity
+                const llmGuard = await checkAndTrackLLMUsage(project.id, 'cron_followup');
+                let followUpText: string;
+
+                if (!llmGuard.allowed) {
+                    followUpText = `Hey! 👋 Just checking in — we'd love to see you at ${project.business_name}. Feel free to reach out if you have any questions!`;
+                } else {
+                    const aiRes = await callPerplexity([
+                        { role: 'user', content: followUpPrompt },
+                    ]);
+                    followUpText = aiRes || `Hey! 👋 Just checking in — we'd love to see you at ${project.business_name}. Feel free to reach out if you have any questions!`;
+                }
 
                 // Send follow-up message via telegramService
                 await telegramService.sendMessage(project.telegram_token, task.chat_id, followUpText);

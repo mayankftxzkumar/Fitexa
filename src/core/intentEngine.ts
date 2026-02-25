@@ -51,15 +51,22 @@ You MUST ALWAYS respond with a valid JSON object and NOTHING else. No text befor
 
 The JSON must have this exact structure:
 {
-  "type": "chat" or "action",
+  "type": "chat" or "action" or "system_query",
   "action": null or one of: "reply_google_review", "update_business_description", "generate_seo_post", "generate_seo_description", "suggest_keywords",
   "payload": {},
-  "message": "your conversational reply here"
+  "message": "your conversational reply here",
+  "query": null or one of: "google_status", "telegram_status", "usage_status", "feature_status", "full_status"
 }
 
 Rules for choosing type:
 - If the user is making general conversation, asking questions, or chatting, use type "chat" with action null.
 - If the user explicitly asks to perform an external action (reply to reviews, update profile, generate SEO content, etc.), use type "action" with the appropriate action name.
+- If the user asks about system status, connection status, enabled features, remaining actions, or integration health, use type "system_query" with the appropriate query value.
+  - "google_status" for Google connection questions
+  - "telegram_status" for Telegram/bot connection questions
+  - "usage_status" for action count, remaining actions, or rate limit questions
+  - "feature_status" for enabled feature questions
+  - "full_status" for general system, status, or overview questions
 - The "message" field should ALWAYS contain a human-friendly response.
 - For actions, set "payload" with relevant parameters extracted from the user message.
 - Do NOT use markdown formatting like ** or __ in the message field. Plain text only.
@@ -88,6 +95,36 @@ export function sanitize(text: string): string {
 }
 
 // ────────────────────────────────────────────────────────
+// System query patterns (local detection — no LLM needed)
+// ────────────────────────────────────────────────────────
+const SYSTEM_QUERY_PATTERNS: Array<{ pattern: RegExp; query: IntentResult['query'] }> = [
+    { pattern: /\b(google|gbp|business profile)\b.*\b(connect|status|linked|active)\b/i, query: 'google_status' },
+    { pattern: /\b(is|check)\b.*\bgoogle\b.*\bconnect/i, query: 'google_status' },
+    { pattern: /\b(telegram|bot)\b.*\b(connect|status|active|linked)\b/i, query: 'telegram_status' },
+    { pattern: /\b(is|check)\b.*\b(telegram|bot)\b.*\b(connect|active)/i, query: 'telegram_status' },
+    { pattern: /\b(how many|actions? (left|remaining)|usage|quota|limit)\b/i, query: 'usage_status' },
+    { pattern: /\b(why can.?t|can.?t .* (reply|action|execute))\b/i, query: 'usage_status' },
+    { pattern: /\b(feature|enabled|what.*feature|which.*feature)\b/i, query: 'feature_status' },
+    { pattern: /\b(system status|full status|connection status|status check|all connections)\b/i, query: 'full_status' },
+    { pattern: /^\s*(status|system|diagnostics?)\s*$/i, query: 'full_status' },
+];
+
+function detectSystemQuery(message: string): IntentResult | null {
+    for (const { pattern, query } of SYSTEM_QUERY_PATTERNS) {
+        if (pattern.test(message)) {
+            return {
+                type: 'system_query',
+                action: null,
+                payload: {},
+                message: null,
+                query,
+            };
+        }
+    }
+    return null;
+}
+
+// ────────────────────────────────────────────────────────
 // Classify intent from user message
 // ────────────────────────────────────────────────────────
 export async function classifyIntent(
@@ -95,6 +132,13 @@ export async function classifyIntent(
     conversationHistory: Array<{ role: string; content: string }>,
     userMessage: string,
 ): Promise<IntentResult> {
+    // Fast path: detect system queries locally (no LLM call needed)
+    const systemQuery = detectSystemQuery(userMessage);
+    if (systemQuery) {
+        console.log(`[INTENT] System query detected locally: ${systemQuery.query}`);
+        return systemQuery;
+    }
+
     const messages = [
         { role: 'system', content: systemPrompt },
         ...conversationHistory.slice(-10),
@@ -135,9 +179,21 @@ function parseIntentResponse(raw: string): IntentResult {
         const parsed = JSON.parse(jsonStr);
 
         // Validate required fields
-        if (!parsed.type || !['chat', 'action'].includes(parsed.type)) {
+        if (!parsed.type || !['chat', 'action', 'system_query'].includes(parsed.type)) {
             console.warn('[INTENT] Invalid type — falling back to chat');
             return fallbackChat(sanitize(raw));
+        }
+
+        // Handle system_query from LLM
+        if (parsed.type === 'system_query') {
+            const validQueries = ['google_status', 'telegram_status', 'usage_status', 'feature_status', 'full_status'];
+            return {
+                type: 'system_query',
+                action: null,
+                payload: {},
+                message: parsed.message ? sanitize(parsed.message) : null,
+                query: validQueries.includes(parsed.query) ? parsed.query : 'full_status',
+            };
         }
 
         // For action type, validate action name is present

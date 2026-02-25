@@ -65,10 +65,23 @@ export interface AgentInput {
 }
 
 export interface IntentResult {
-    type: 'chat' | 'action';
+    type: 'chat' | 'action' | 'system_query';
     action: string | null;
     payload: Record<string, unknown>;
     message: string | null;
+    query?: 'google_status' | 'telegram_status' | 'usage_status' | 'feature_status' | 'full_status';
+}
+
+export interface SystemState {
+    googleConnected: boolean;
+    telegramConnected: boolean;
+    enabledFeatures: string[];
+    actionsUsedToday: number;
+    actionsRemainingToday: number;
+    minuteUsage: number;
+    minuteRemaining: number;
+    pendingActions: number;
+    status: 'active' | 'draft';
 }
 
 export interface ActionResult {
