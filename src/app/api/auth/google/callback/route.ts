@@ -53,33 +53,67 @@ export async function GET(request: NextRequest) {
 
         // ─────────────────────────────────────────────────
         // STEP 2: Fetch Google Business accounts
+        //   Primary: v1 Account Management API
+        //   Fallback: Legacy v4 mybusiness API (separate quota)
         // ─────────────────────────────────────────────────
+        let accountName = '';
+
+        // Try v1 API first
         const accountsResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
             headers: { 'Authorization': `Bearer ${accessToken}` },
         });
-
         const accountsData = await accountsResponse.json();
 
-        if (accountsData.error || !accountsData.accounts || accountsData.accounts.length === 0) {
-            const reason = accountsData.error?.status || accountsData.error?.code || (accountsData.accounts?.length === 0 ? 'zero_accounts' : 'no_accounts_field');
-            console.error('[Google Callback] Accounts API failed:', JSON.stringify(accountsData));
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_accounts&reason=${encodeURIComponent(String(reason))}`, request.url));
-        }
+        if (!accountsData.error && accountsData.accounts && accountsData.accounts.length > 0) {
+            accountName = accountsData.accounts[0].name;
+        } else {
+            console.warn('[Google Callback] v1 Accounts API failed, trying v4 fallback:', accountsData.error?.status || 'no accounts');
 
-        const accountName: string = accountsData.accounts[0].name;
+            // Fallback to legacy v4 API
+            const v4Response = await fetch('https://mybusiness.googleapis.com/v4/accounts', {
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+            const v4Data = await v4Response.json();
+
+            if (!v4Data.error && v4Data.accounts && v4Data.accounts.length > 0) {
+                accountName = v4Data.accounts[0].name;
+            } else {
+                const reason = v4Data.error?.status || accountsData.error?.status || 'no_accounts';
+                console.error('[Google Callback] Both v1 and v4 Accounts APIs failed:', JSON.stringify({ v1: accountsData, v4: v4Data }));
+                return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_accounts&reason=${encodeURIComponent(String(reason))}`, request.url));
+            }
+        }
 
         // ─────────────────────────────────────────────────
         // STEP 3: Fetch locations for the account
+        //   Primary: v1 Business Information API
+        //   Fallback: Legacy v4 mybusiness API
         // ─────────────────────────────────────────────────
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let locListData: any = {};
+
         const locListResponse = await fetch(
             `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title,storefrontAddress,categories,profile`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
         );
-        const locListData = await locListResponse.json();
+        locListData = await locListResponse.json();
 
         if (locListData.error || !locListData.locations || locListData.locations.length === 0) {
-            console.error('[Google Callback] No locations found:', JSON.stringify(locListData));
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_locations`, request.url));
+            console.warn('[Google Callback] v1 Locations API failed, trying v4 fallback');
+
+            // Fallback to legacy v4 API
+            const v4LocResponse = await fetch(
+                `https://mybusiness.googleapis.com/v4/${accountName}/locations`,
+                { headers: { 'Authorization': `Bearer ${accessToken}` } }
+            );
+            const v4LocData = await v4LocResponse.json();
+
+            if (!v4LocData.error && v4LocData.locations && v4LocData.locations.length > 0) {
+                locListData = v4LocData;
+            } else {
+                console.error('[Google Callback] Both v1 and v4 Locations APIs failed:', JSON.stringify({ v1: locListData, v4: v4LocData }));
+                return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_locations`, request.url));
+            }
         }
 
         // ─────────────────────────────────────────────────
