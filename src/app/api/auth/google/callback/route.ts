@@ -61,8 +61,9 @@ export async function GET(request: NextRequest) {
         const accountsData = await accountsResponse.json();
 
         if (accountsData.error || !accountsData.accounts || accountsData.accounts.length === 0) {
-            console.error('[Google Callback] No accounts found:', JSON.stringify(accountsData));
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_accounts`, request.url));
+            const reason = accountsData.error?.status || accountsData.error?.code || (accountsData.accounts?.length === 0 ? 'zero_accounts' : 'no_accounts_field');
+            console.error('[Google Callback] Accounts API failed:', JSON.stringify(accountsData));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_accounts&reason=${encodeURIComponent(String(reason))}`, request.url));
         }
 
         const accountName: string = accountsData.accounts[0].name;
