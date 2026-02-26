@@ -4,6 +4,17 @@ import { NextRequest, NextResponse } from 'next/server';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
+// Safe JSON parser — returns null instead of throwing on non-JSON responses
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function safeJson(response: Response): Promise<any> {
+    try {
+        const text = await response.text();
+        return JSON.parse(text);
+    } catch {
+        return { error: { status: `HTTP_${response.status}`, message: 'Non-JSON response' } };
+    }
+}
+
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
@@ -35,7 +46,7 @@ export async function GET(request: NextRequest) {
             }),
         });
 
-        const tokenData = await tokenResponse.json();
+        const tokenData = await safeJson(tokenResponse);
 
         if (tokenData.error) {
             console.error('[Google Callback] Token exchange failed:', tokenData.error, tokenData.error_description);
@@ -62,25 +73,30 @@ export async function GET(request: NextRequest) {
         const accountsResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
             headers: { 'Authorization': `Bearer ${accessToken}` },
         });
-        const accountsData = await accountsResponse.json();
+        const accountsData = await safeJson(accountsResponse);
 
         if (!accountsData.error && accountsData.accounts && accountsData.accounts.length > 0) {
             accountName = accountsData.accounts[0].name;
+            console.log('[Google Callback] v1 Accounts API success:', accountName);
         } else {
-            console.warn('[Google Callback] v1 Accounts API failed, trying v4 fallback:', accountsData.error?.status || 'no accounts');
+            console.warn('[Google Callback] v1 Accounts API failed:', accountsData.error?.status || 'no accounts');
 
             // Fallback to legacy v4 API
             const v4Response = await fetch('https://mybusiness.googleapis.com/v4/accounts', {
                 headers: { 'Authorization': `Bearer ${accessToken}` },
             });
-            const v4Data = await v4Response.json();
+            const v4Data = await safeJson(v4Response);
 
             if (!v4Data.error && v4Data.accounts && v4Data.accounts.length > 0) {
                 accountName = v4Data.accounts[0].name;
+                console.log('[Google Callback] v4 Accounts API success:', accountName);
             } else {
-                const reason = v4Data.error?.status || accountsData.error?.status || 'no_accounts';
-                console.error('[Google Callback] Both v1 and v4 Accounts APIs failed:', JSON.stringify({ v1: accountsData, v4: v4Data }));
-                return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_accounts&reason=${encodeURIComponent(String(reason))}`, request.url));
+                const v1reason = accountsData.error?.status || accountsData.error?.code || 'unknown';
+                const v4reason = v4Data.error?.status || v4Data.error?.code || 'unknown';
+                console.error('[Google Callback] Both APIs failed. v1:', v1reason, 'v4:', v4reason);
+                return NextResponse.redirect(
+                    new URL(`/builder/${projectId}?error=google_no_accounts&v1=${encodeURIComponent(String(v1reason))}&v4=${encodeURIComponent(String(v4reason))}`, request.url)
+                );
             }
         }
 
@@ -96,7 +112,7 @@ export async function GET(request: NextRequest) {
             `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title,storefrontAddress,categories,profile`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
         );
-        locListData = await locListResponse.json();
+        locListData = await safeJson(locListResponse);
 
         if (locListData.error || !locListData.locations || locListData.locations.length === 0) {
             console.warn('[Google Callback] v1 Locations API failed, trying v4 fallback');
@@ -106,12 +122,12 @@ export async function GET(request: NextRequest) {
                 `https://mybusiness.googleapis.com/v4/${accountName}/locations`,
                 { headers: { 'Authorization': `Bearer ${accessToken}` } }
             );
-            const v4LocData = await v4LocResponse.json();
+            const v4LocData = await safeJson(v4LocResponse);
 
             if (!v4LocData.error && v4LocData.locations && v4LocData.locations.length > 0) {
                 locListData = v4LocData;
             } else {
-                console.error('[Google Callback] Both v1 and v4 Locations APIs failed:', JSON.stringify({ v1: locListData, v4: v4LocData }));
+                console.error('[Google Callback] Both Locations APIs failed');
                 return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_locations`, request.url));
             }
         }
@@ -222,6 +238,9 @@ export async function GET(request: NextRequest) {
 
     } catch (err) {
         console.error('[Google Callback] Unexpected error:', err);
-        return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_unexpected_error`, request.url));
+        const msg = err instanceof Error ? err.message : String(err);
+        return NextResponse.redirect(
+            new URL(`/builder/${projectId}?error=google_unexpected_error&detail=${encodeURIComponent(msg.slice(0, 200))}`, request.url)
+        );
     }
 }
