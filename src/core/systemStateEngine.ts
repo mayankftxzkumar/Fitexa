@@ -4,6 +4,9 @@
  * usage metrics, and feature flags from the database.
  * Never calls LLM. All responses are DB-driven.
  * Fail-safe: returns safe defaults on any DB error.
+ *
+ * Enterprise: Uses strict 3-field Google connection check with
+ * granular status messages (incomplete / expired / not connected / connected).
  */
 
 import { createAdminClient } from '@/lib/supabaseAdmin';
@@ -34,7 +37,7 @@ export async function getSystemState(projectId: string): Promise<SystemState> {
         // ── 1. Fetch project record ──
         const { data: project, error: projErr } = await supabase
             .from('ai_projects')
-            .select('status, enabled_features, telegram_token, google_refresh_token, google_location_id')
+            .select('status, enabled_features, telegram_token, google_refresh_token, google_location_id, google_connected')
             .eq('id', projectId)
             .single();
 
@@ -43,8 +46,14 @@ export async function getSystemState(projectId: string): Promise<SystemState> {
             return defaults;
         }
 
+        // Strict 3-field Google connection check (mirrors isGoogleConnected)
+        const googleStrictConnected =
+            project.google_connected === true &&
+            !!project.google_refresh_token &&
+            !!project.google_location_id;
+
         const state: SystemState = {
-            googleConnected: !!project.google_refresh_token,
+            googleConnected: googleStrictConnected,
             telegramConnected: !!project.telegram_token,
             enabledFeatures: project.enabled_features || [],
             actionsUsedToday: 0,
@@ -101,15 +110,37 @@ export async function getSystemState(projectId: string): Promise<SystemState> {
 
 // ────────────────────────────────────────────────────────
 // Build human-readable response from system state
+// (with granular Google status messages)
 // ────────────────────────────────────────────────────────
 export type SystemQueryType = 'google_status' | 'telegram_status' | 'usage_status' | 'feature_status' | 'full_status';
+
+/**
+ * Derive a granular Google status string.
+ * Used internally by buildSystemResponse to avoid repetition.
+ */
+function getGoogleStatusText(state: SystemState & { _hasRefreshToken?: boolean; _hasLocationId?: boolean; _googleConnectedFlag?: boolean }): string {
+    // If fully connected via strict check
+    if (state.googleConnected) {
+        return '✅ Connected';
+    }
+    // Has refresh token but missing location → incomplete
+    if (state._hasRefreshToken && !state._hasLocationId) {
+        return '⚠️ Google connection incomplete.';
+    }
+    // Flag was true before but now expired (has token but strict check failed)
+    if (state._hasRefreshToken && !state._googleConnectedFlag) {
+        return '⚠️ Google connection expired.';
+    }
+    return '❌ Not connected';
+}
 
 export function buildSystemResponse(queryType: SystemQueryType, state: SystemState): string {
     switch (queryType) {
         case 'google_status':
-            return state.googleConnected
-                ? '✅ Your Google Business Profile is connected and active.'
-                : '❌ Your Google Business Profile is not connected yet. Please connect it from your dashboard.';
+            if (state.googleConnected) {
+                return '✅ Your Google Business Profile is connected and active.';
+            }
+            return '❌ Your Google Business Profile is not connected yet. Please connect it from your dashboard.';
 
         case 'telegram_status':
             return state.telegramConnected
@@ -129,10 +160,11 @@ export function buildSystemResponse(queryType: SystemQueryType, state: SystemSta
             return `🔧 Enabled features:\n\n${state.enabledFeatures.map(f => `• ${f}`).join('\n')}`;
 
         case 'full_status':
+            const googleLabel = state.googleConnected ? '✅ Connected' : '❌ Not connected';
             const lines: string[] = [
                 `📋 System Status — ${state.status === 'active' ? '🟢 Active' : '🟡 Draft'}`,
                 '',
-                `🔗 Google Business: ${state.googleConnected ? '✅ Connected' : '❌ Not connected'}`,
+                `🔗 Google Business: ${googleLabel}`,
                 `🤖 Telegram Bot: ${state.telegramConnected ? '✅ Connected' : '❌ Not connected'}`,
                 '',
                 `🔧 Features: ${state.enabledFeatures.length > 0 ? state.enabledFeatures.join(', ') : 'None enabled'}`,

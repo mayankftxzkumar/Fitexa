@@ -2,6 +2,11 @@
  * Google Business Service Layer
  * Centralized Google Business API operations.
  * Used by both cron jobs and the agent action registry.
+ *
+ * Enterprise-grade:
+ * - isGoogleConnected()        — strict 3-field validation
+ * - getValidGoogleAccessToken() — auto-disconnect on refresh failure
+ * - All action handlers validate before executing
  */
 
 import { createAdminClient } from '@/lib/supabaseAdmin';
@@ -13,13 +18,26 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY!;
 
 // ────────────────────────────────────────────────────────
-// Refresh Google Access Token
+// Strict Connection Check
+// Returns TRUE only if all three conditions are met.
 // ────────────────────────────────────────────────────────
-export async function refreshAccessToken(
+export function isGoogleConnected(project: AIProject): boolean {
+    return (
+        project.google_connected === true &&
+        !!project.google_refresh_token &&
+        !!project.google_location_id
+    );
+}
+
+// ────────────────────────────────────────────────────────
+// Access Token Wrapper — refresh + auto-disconnect
+// All Google API calls MUST use this function.
+// ────────────────────────────────────────────────────────
+export async function getValidGoogleAccessToken(
     project: AIProject,
 ): Promise<{ accessToken: string | null; error?: string }> {
     if (!project.google_refresh_token) {
-        return { accessToken: null, error: 'No Google refresh token configured' };
+        return { accessToken: null, error: '⚠️ Google connection expired. Please reconnect.' };
     }
 
     try {
@@ -35,22 +53,46 @@ export async function refreshAccessToken(
         });
 
         const data = await res.json();
+
         if (data.error) {
             console.error('[GOOGLE-SVC] Token refresh error:', data.error);
-            return { accessToken: null, error: `Token refresh failed: ${data.error}` };
+
+            // Mark project as disconnected
+            const supabase = createAdminClient();
+            await supabase
+                .from('ai_projects')
+                .update({ google_connected: false })
+                .eq('id', project.id);
+
+            return { accessToken: null, error: '⚠️ Google connection expired. Please reconnect.' };
         }
 
-        // Persist new access token
+        // Persist new access token + validation timestamp
         const supabase = createAdminClient();
         await supabase
             .from('ai_projects')
-            .update({ google_access_token: data.access_token })
+            .update({
+                google_access_token: data.access_token,
+                google_last_validated_at: new Date().toISOString(),
+            })
             .eq('id', project.id);
 
         return { accessToken: data.access_token };
     } catch (err) {
         console.error('[GOOGLE-SVC] Token refresh network error:', err);
-        return { accessToken: null, error: 'Network error refreshing Google token' };
+
+        // Mark project as disconnected on network failure
+        try {
+            const supabase = createAdminClient();
+            await supabase
+                .from('ai_projects')
+                .update({ google_connected: false })
+                .eq('id', project.id);
+        } catch {
+            // Best-effort disconnect
+        }
+
+        return { accessToken: null, error: '⚠️ Google connection expired. Please reconnect.' };
     }
 }
 
@@ -132,20 +174,21 @@ export async function replyToLatestReviews(
 ): Promise<ActionResult> {
     const { project } = context;
 
-    if (!project.google_location_id || !project.google_refresh_token) {
+    // Hard validation before action
+    if (!isGoogleConnected(project)) {
         return {
             success: false,
-            message: '❌ Google Business is not connected. Please reconnect from the builder.',
-            error: 'Missing Google credentials',
+            message: '❌ Google Business is not connected. Please reconnect from dashboard.',
+            error: 'Google not connected (strict check)',
         };
     }
 
-    // 1. Refresh token
-    const { accessToken, error: tokenErr } = await refreshAccessToken(project);
+    // 1. Get valid access token (auto-disconnects on failure)
+    const { accessToken, error: tokenErr } = await getValidGoogleAccessToken(project);
     if (!accessToken) {
         return {
             success: false,
-            message: '❌ Could not authenticate with Google. Please reconnect.',
+            message: tokenErr || '⚠️ Google connection expired. Please reconnect.',
             error: tokenErr,
         };
     }
@@ -203,17 +246,22 @@ export async function updateProfile(
 ): Promise<ActionResult> {
     const { project } = context;
 
-    if (!project.google_location_id || !project.google_refresh_token) {
+    // Hard validation before action
+    if (!isGoogleConnected(project)) {
         return {
             success: false,
-            message: '❌ Google Business is not connected. Please reconnect.',
-            error: 'Missing Google credentials',
+            message: '❌ Google Business is not connected. Please reconnect from dashboard.',
+            error: 'Google not connected (strict check)',
         };
     }
 
-    const { accessToken, error: tokenErr } = await refreshAccessToken(project);
+    const { accessToken, error: tokenErr } = await getValidGoogleAccessToken(project);
     if (!accessToken) {
-        return { success: false, message: '❌ Authentication failed.', error: tokenErr };
+        return {
+            success: false,
+            message: tokenErr || '⚠️ Google connection expired. Please reconnect.',
+            error: tokenErr,
+        };
     }
 
     const newDescription = typeof payload.description === 'string' ? payload.description : null;
@@ -260,17 +308,22 @@ export async function updateProfile(
 export async function getBusinessData(
     project: AIProject,
 ): Promise<ActionResult> {
-    if (!project.google_location_id || !project.google_refresh_token) {
+    // Hard validation before action
+    if (!isGoogleConnected(project)) {
         return {
             success: false,
-            message: '❌ Google Business is not connected.',
-            error: 'Missing Google credentials',
+            message: '❌ Google Business is not connected. Please reconnect from dashboard.',
+            error: 'Google not connected (strict check)',
         };
     }
 
-    const { accessToken, error: tokenErr } = await refreshAccessToken(project);
+    const { accessToken, error: tokenErr } = await getValidGoogleAccessToken(project);
     if (!accessToken) {
-        return { success: false, message: '❌ Authentication failed.', error: tokenErr };
+        return {
+            success: false,
+            message: tokenErr || '⚠️ Google connection expired. Please reconnect.',
+            error: tokenErr,
+        };
     }
 
     try {

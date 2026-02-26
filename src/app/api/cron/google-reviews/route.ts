@@ -18,11 +18,12 @@ export async function GET(request: Request) {
     try {
         const supabase = createAdminClient();
 
-        // Fetch active projects that have Google Location ID configured
+        // Fetch active projects that have Google fully connected
         const { data: projects, error } = await supabase
             .from('ai_projects')
             .select('*')
             .eq('status', 'active')
+            .eq('google_connected', true)
             .not('google_location_id', 'is', null)
             .not('google_refresh_token', 'is', null);
 

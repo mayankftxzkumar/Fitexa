@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
     const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
 
     try {
-        // Exchange code for tokens
+        // ─────────────────────────────────────────────────
+        // STEP 1: Exchange code for tokens (hold in memory)
+        // ─────────────────────────────────────────────────
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -36,82 +38,107 @@ export async function GET(request: NextRequest) {
         const tokenData = await tokenResponse.json();
 
         if (tokenData.error) {
-            console.error('Google token error:', tokenData.error, tokenData.error_description);
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_token_exchange`, request.url));
+            console.error('[Google Callback] Token exchange failed:', tokenData.error, tokenData.error_description);
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
         }
 
-        const supabase = createAdminClient();
+        // Hold tokens in memory — DO NOT save to DB yet
+        const accessToken: string = tokenData.access_token;
+        const refreshToken: string | undefined = tokenData.refresh_token;
 
-        // Fetch user's Google Business accounts
-        // NOTE: accounts listing lives on the Account Management API, NOT Business Information API
+        if (!accessToken) {
+            console.error('[Google Callback] No access_token received');
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+        }
+
+        // ─────────────────────────────────────────────────
+        // STEP 2: Fetch Google Business accounts
+        // ─────────────────────────────────────────────────
         const accountsResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
-            headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
+            headers: { 'Authorization': `Bearer ${accessToken}` },
         });
 
         const accountsData = await accountsResponse.json();
-        let locationId = '';
+
+        if (accountsData.error || !accountsData.accounts || accountsData.accounts.length === 0) {
+            console.error('[Google Callback] No accounts found:', accountsData.error || 'Empty accounts list');
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+        }
+
+        const accountName: string = accountsData.accounts[0].name;
+
+        // ─────────────────────────────────────────────────
+        // STEP 3: Fetch locations for the account
+        // ─────────────────────────────────────────────────
+        const locListResponse = await fetch(
+            `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title,storefrontAddress,categories,profile`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+        const locListData = await locListResponse.json();
+
+        if (locListData.error || !locListData.locations || locListData.locations.length === 0) {
+            console.error('[Google Callback] No locations found:', locListData.error || 'Zero locations');
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+        }
+
+        // ─────────────────────────────────────────────────
+        // STEP 4: Extract first valid location metadata
+        // ─────────────────────────────────────────────────
+        const loc = locListData.locations[0];
+        const locationId: string = loc.name || '';
+
+        if (!locationId) {
+            console.error('[Google Callback] Location has no name/id');
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+        }
+
         let businessName = '';
         let businessLocation = '';
         let businessCategory = '';
         let businessDescription = '';
 
-        if (accountsData.error) {
-            console.warn('[Google Callback] Accounts API error:', accountsData.error);
-        } else if (accountsData.accounts && accountsData.accounts.length > 0) {
-            const accountName = accountsData.accounts[0].name;
-
-            // Fetch locations for the first account (this endpoint IS on the Business Information API)
-            const locListResponse = await fetch(
-                `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title,storefrontAddress,categories,profile`,
-                { headers: { 'Authorization': `Bearer ${tokenData.access_token}` } }
-            );
-            const locListData = await locListResponse.json();
-
-            if (locListData.error) {
-                console.warn('[Google Callback] Locations API error:', locListData.error);
-            } else if (locListData.locations && locListData.locations.length > 0) {
-                const loc = locListData.locations[0];
-                locationId = loc.name || ''; // format: "locations/XXXXX"
-
-                // Extract business name from title
-                if (loc.title) {
-                    businessName = loc.title;
-                }
-
-                // Extract address
-                if (loc.storefrontAddress) {
-                    const addr = loc.storefrontAddress;
-                    const parts = [
-                        addr.locality,
-                        addr.administrativeArea,
-                        addr.regionCode,
-                    ].filter(Boolean);
-                    businessLocation = parts.join(', ');
-                }
-
-                // Extract primary category
-                if (loc.categories?.primaryCategory?.displayName) {
-                    businessCategory = loc.categories.primaryCategory.displayName;
-                }
-
-                // Extract profile description
-                if (loc.profile?.description) {
-                    businessDescription = loc.profile.description;
-                }
-            }
-        } else {
-            console.warn('[Google Callback] No accounts found for this Google user');
+        if (loc.title) {
+            businessName = loc.title;
         }
 
-        // Save tokens, location, and business data to DB
+        if (loc.storefrontAddress) {
+            const addr = loc.storefrontAddress;
+            const parts = [
+                addr.locality,
+                addr.administrativeArea,
+                addr.regionCode,
+            ].filter(Boolean);
+            businessLocation = parts.join(', ');
+        }
+
+        if (loc.categories?.primaryCategory?.displayName) {
+            businessCategory = loc.categories.primaryCategory.displayName;
+        }
+
+        if (loc.profile?.description) {
+            businessDescription = loc.profile.description;
+        }
+
+        // ─────────────────────────────────────────────────
+        // STEP 5: Atomic DB update — ALL fields at once
+        //         Only reaches here if ALL above steps passed
+        // ─────────────────────────────────────────────────
+        const supabase = createAdminClient();
+        const now = new Date().toISOString();
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updatePayload: any = {
-            google_access_token: tokenData.access_token,
+            google_access_token: accessToken,
             google_location_id: locationId,
+            google_account_name: accountName,
+            google_connected: true,
+            google_connected_at: now,
+            google_last_validated_at: now,
         };
 
-        if (tokenData.refresh_token) {
-            updatePayload.google_refresh_token = tokenData.refresh_token;
+        // Only save refresh_token if provided (first auth always provides it)
+        if (refreshToken) {
+            updatePayload.google_refresh_token = refreshToken;
         }
 
         // Auto-fill business data from Google
@@ -126,8 +153,8 @@ export async function GET(request: NextRequest) {
             .eq('id', projectId);
 
         if (dbError) {
-            console.error('Failed to save Google tokens:', dbError);
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=db_save_failed`, request.url));
+            console.error('[Google Callback] Failed to save Google data:', dbError);
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
         }
 
         // Auto-enable google_review_reply feature after successful GBP connection
@@ -159,7 +186,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL(`/builder/${projectId}?google=connected`, request.url));
 
     } catch (err) {
-        console.error('Google callback error:', err);
-        return NextResponse.redirect(new URL(`/builder/${projectId}?error=internal_server_error`, request.url));
+        console.error('[Google Callback] Unexpected error:', err);
+        return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
     }
 }
