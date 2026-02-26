@@ -473,7 +473,7 @@ export default function BuilderClient({ user, project: initialProject }: { user:
                                 </div>
 
                                 {/* Connected status */}
-                                {(botUsername || initialProject?.telegram_bot_username || initialProject?.telegram_token) && (
+                                {(botUsername || initialProject?.telegram_bot_username) && (
                                     <div className="rounded-[16px] p-6 border border-[#0D4F31]/20 bg-[#f0f9f4]">
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
                                             <div className="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-white shadow-sm border border-[#0D4F31]/10 shrink-0">
