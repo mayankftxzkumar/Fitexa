@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
         if (tokenData.error) {
             console.error('[Google Callback] Token exchange failed:', tokenData.error, tokenData.error_description);
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_token_exchange`, request.url));
         }
 
         // Hold tokens in memory — DO NOT save to DB yet
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
         if (!accessToken) {
             console.error('[Google Callback] No access_token received');
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_access_token`, request.url));
         }
 
         // ─────────────────────────────────────────────────
@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
         const accountsData = await accountsResponse.json();
 
         if (accountsData.error || !accountsData.accounts || accountsData.accounts.length === 0) {
-            console.error('[Google Callback] No accounts found:', accountsData.error || 'Empty accounts list');
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+            console.error('[Google Callback] No accounts found:', JSON.stringify(accountsData));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_accounts`, request.url));
         }
 
         const accountName: string = accountsData.accounts[0].name;
@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
         const locListData = await locListResponse.json();
 
         if (locListData.error || !locListData.locations || locListData.locations.length === 0) {
-            console.error('[Google Callback] No locations found:', locListData.error || 'Zero locations');
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+            console.error('[Google Callback] No locations found:', JSON.stringify(locListData));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_locations`, request.url));
         }
 
         // ─────────────────────────────────────────────────
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 
         if (!locationId) {
             console.error('[Google Callback] Location has no name/id');
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_no_location_id`, request.url));
         }
 
         let businessName = '';
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
 
         if (dbError) {
             console.error('[Google Callback] Failed to save Google data:', dbError);
-            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+            return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_db_save_failed`, request.url));
         }
 
         // Auto-enable google_review_reply feature after successful GBP connection
@@ -187,6 +187,6 @@ export async function GET(request: NextRequest) {
 
     } catch (err) {
         console.error('[Google Callback] Unexpected error:', err);
-        return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_connection_failed`, request.url));
+        return NextResponse.redirect(new URL(`/builder/${projectId}?error=google_unexpected_error`, request.url));
     }
 }
